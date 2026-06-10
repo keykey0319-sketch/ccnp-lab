@@ -1,0 +1,1542 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CCNP ENCOR Lab Simulator</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;font-family:-apple-system,Arial,sans-serif;font-size:14px;background:#0d1117;color:#c9d1d9;}
+#lockScreen{position:fixed;inset:0;background:#0d1117;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:18px;}
+#lockScreen h2{color:#c9d1d9;font-size:20px;font-weight:600;}
+#lockScreen p{color:#8b949e;font-size:13px;}
+#lockInput{background:#161b22;border:1.5px solid #30363d;border-radius:10px;color:#c9d1d9;font-size:26px;padding:14px 20px;text-align:center;outline:none;width:190px;letter-spacing:8px;-webkit-appearance:none;}
+#lockInput:focus{border-color:#4a9eff;}
+#lockBtn{background:#238636;border:none;border-radius:10px;color:#fff;font-size:16px;font-weight:600;padding:14px 0;cursor:pointer;width:190px;}
+#lockErr{color:#f85149;font-size:13px;min-height:18px;}
+.app{display:flex;flex-direction:column;height:100vh;max-width:1100px;margin:0 auto;display:none;}
+/* topbar: mobile only */
+.topbar{display:flex;background:#161b22;border-bottom:1px solid #30363d;flex-shrink:0;}
+.topbar-tab{flex:1;padding:11px 4px;text-align:center;color:#8b949e;font-size:12px;cursor:pointer;border-bottom:2px solid transparent;}
+.topbar-tab.on{color:#e6edf3;border-bottom-color:#4a9eff;font-weight:600;}
+.lsection{display:none;flex-direction:column;}
+.lsection.on{display:flex;}
+.tcontent{padding:12px;line-height:1.8;overflow-y:auto;border-bottom:1px solid #30363d;flex:1;}
+.tcontent h4{font-weight:600;margin-bottom:5px;font-size:13px;color:#e6edf3;}
+.tcontent ol{padding-left:18px;}
+.tcontent li{margin-bottom:7px;font-size:13px;color:#c9d1d9;}
+.hl{background:#2d2200;color:#e3b341;padding:1px 5px;border-radius:3px;font-family:monospace;font-size:12px;font-weight:600;}
+.qbar{padding:8px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#161b22;border-bottom:1px solid #30363d;flex-shrink:0;}
+.nqbtn{font-size:12px;padding:7px 14px;border-radius:8px;border:1px solid #e3b341;background:transparent;color:#e3b341;cursor:pointer;font-weight:600;}
+.tbadge{font-size:11px;padding:2px 8px;border-radius:6px;background:#1c2d3d;color:#4a9eff;font-weight:600;}
+.catbadge{font-size:11px;padding:2px 8px;border-radius:6px;background:#1c2d1c;color:#3fb950;font-weight:600;}
+.topobox{padding:10px;background:#161b22;overflow-y:auto;flex:1;border-bottom:1px solid #30363d;}
+.devtabs{display:flex;background:#161b22;border-bottom:1px solid #30363d;flex-shrink:0;}
+.dt{flex:1;padding:9px;font-size:12px;cursor:pointer;border-bottom:2px solid transparent;color:#8b949e;text-align:center;}
+.dt.on{color:#e6edf3;border-bottom-color:#e6edf3;font-weight:600;}
+.term{background:#0d1117;display:flex;flex-direction:column;flex:1;min-height:0;}
+.tout{flex:1;padding:10px 12px;font-size:12px;font-family:'Courier New',monospace;color:#c9d1d9;overflow-y:auto;line-height:1.7;white-space:pre-wrap;word-break:break-all;min-height:140px;}
+.c-ok{color:#3fb950;}.c-err{color:#f85149;}.c-info{color:#79c0ff;}.c-prompt{color:#e3b341;}.c-hint{color:#6e7681;font-style:italic;}
+.acbox{background:#161b22;border-top:1px solid #30363d;font-size:12px;font-family:'Courier New',monospace;max-height:110px;overflow-y:auto;display:none;flex-shrink:0;}
+.aci{padding:5px 12px;color:#c9d1d9;cursor:pointer;display:flex;gap:8px;align-items:baseline;border-bottom:0.5px solid #21262d;}
+.aci:active,.aci.sel{background:#1f2937;}
+.acmd{color:#79c0ff;min-width:130px;font-size:12px;}.adsc{color:#6e7681;font-size:11px;}
+.quickbar{display:flex;gap:4px;padding:5px 8px;background:#161b22;overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch;border-top:1px solid #30363d;}
+.quickbar::-webkit-scrollbar{display:none;}
+.qk{font-size:11px;padding:5px 9px;border-radius:6px;border:1px solid #30363d;background:#21262d;color:#c9d1d9;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.qk:active{background:#2d333b;}
+.tin{display:flex;align-items:center;border-top:1px solid #30363d;padding:7px 10px;gap:6px;background:#0d1117;flex-shrink:0;}
+.tin span{color:#e3b341;font-size:12px;font-family:'Courier New',monospace;white-space:nowrap;}
+#cin{flex:1;background:transparent;border:none;outline:none;color:#c9d1d9;font-size:14px;font-family:'Courier New',monospace;-webkit-appearance:none;}
+#runbtn{background:#e3b341;border:none;border-radius:6px;color:#000;font-size:14px;font-weight:700;padding:5px 12px;cursor:pointer;flex-shrink:0;}
+.brow{display:flex;gap:6px;padding:7px 10px;border-top:1px solid #30363d;flex-wrap:wrap;background:#161b22;flex-shrink:0;}
+.btn{font-size:11px;padding:7px 10px;border-radius:8px;border:1px solid #30363d;background:#21262d;color:#c9d1d9;cursor:pointer;flex:1;text-align:center;}
+.btn:active{background:#2d333b;}
+.btng{border-color:#238636;color:#3fb950;}
+.sarea{padding:7px 10px;display:flex;flex-wrap:wrap;gap:5px;border-top:1px solid #30363d;background:#161b22;flex-shrink:0;min-height:8px;}
+.bok{font-size:11px;padding:3px 8px;border-radius:6px;background:#0f2318;color:#3fb950;border:1px solid #238636;}
+.berr{font-size:11px;padding:3px 8px;border-radius:6px;background:#2d0f0f;color:#f85149;border:1px solid #6e2020;}
+/* PC >= 900px: side by side */
+@media(min-width:900px){
+  .app{flex-direction:row;}
+  .left-col{display:flex!important;flex-direction:column;width:42%;border-right:1px solid #30363d;overflow:hidden;}
+  .right-col{display:flex!important;flex-direction:column;flex:1;overflow:hidden;}
+  .topbar{display:none!important;}
+  .lsection{display:flex!important;flex:1;overflow:hidden;}
+  .tcontent{max-height:none;}
+  .topobox{max-height:none;}
+  .left-tabs{display:flex!important;background:#161b22;border-bottom:1px solid #30363d;flex-shrink:0;}
+  .lt{flex:1;padding:9px;text-align:center;font-size:12px;cursor:pointer;border-bottom:2px solid transparent;color:#8b949e;}
+  .lt.on{color:#e6edf3;border-bottom-color:#e6edf3;font-weight:600;}
+  #termSection,#devtabs_wrap,.brow,#sarea,#quickbar{display:flex!important;}
+}
+@media(max-width:899px){
+  .left-col{display:contents;}
+  .right-col{display:contents;}
+  .left-tabs{display:none!important;}
+  .app{height:100dvh;}
+}
+</style>
+</head>
+<body>
+<div id="lockScreen">
+  <h2>🔒 CCNP ENCOR Lab</h2>
+  <p>비밀번호를 입력하세요</p>
+  <input id="lockInput" type="password" inputmode="numeric" maxlength="6" placeholder="••••">
+  <div id="lockErr"></div>
+  <button id="lockBtn">입력</button>
+</div>
+
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="topbar-tab on" id="ttab-tasks" onclick="showTopTab('tasks')">📋 Tasks</div>
+    <div class="topbar-tab" id="ttab-topology" onclick="showTopTab('topology')">🗺 Topo</div>
+    <div class="topbar-tab" id="ttab-terminal" onclick="showTopTab('terminal')">💻 CLI</div>
+  </div>
+  <div class="left-col" id="leftCol">
+    <div class="left-tabs">
+      <div class="lt on" id="lt-tasks" onclick="showLeftTab('tasks')">Tasks</div>
+      <div class="lt" id="lt-topology" onclick="showLeftTab('topology')">Topology</div>
+    </div>
+    <div class="lsection on" id="ls-tasks">
+      <div class="tcontent">
+        <h4>Guidelines</h4>
+        <ol style="margin-bottom:10px;">
+          <li>All necessary preconfigurations have been applied.</li>
+          <li>Do not change the enable password or hostname.</li>
+          <li>Save your configurations to NVRAM before moving on.</li>
+        </ol>
+        <h4>Tasks</h4>
+        <p id="taskIntro" style="font-size:12px;color:#8b949e;margin-bottom:8px;"></p>
+        <ol id="tasklist"></ol>
+        <div id="bullets" style="margin-top:6px;padding-left:14px;font-size:13px;line-height:1.9;"></div>
+      </div>
+      <div class="qbar">
+        <button class="nqbtn" id="newQBtn">↻ 새 문제</button>
+        <span class="catbadge" id="catlabel"></span>
+        <span class="tbadge" id="typelabel"></span>
+        <span style="font-size:11px;color:#6e7681;" id="qnum"></span>
+      </div>
+    </div>
+    <div class="lsection" id="ls-topology">
+      <div class="topobox">
+        <svg id="toposvg" width="100%" viewBox="0 0 440 300" xmlns="http://www.w3.org/2000/svg">
+          <g id="topoG"></g>
+        </svg>
+      </div>
+    </div>
+  </div>
+  <div class="right-col" id="rightCol">
+    <div class="devtabs" id="devtabsEl"></div>
+    <div class="term" id="termSection">
+      <div class="tout" id="tout" onclick="document.getElementById('cin').focus()"></div>
+      <div class="acbox" id="acbox"></div>
+      <div class="quickbar" id="quickbar"></div>
+      <div class="tin">
+        <span id="plbl">R1&gt;</span>
+        <input id="cin" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="text" placeholder="명령어 입력 (Tab=자동완성)...">
+        <button id="runbtn">▶</button>
+      </div>
+    </div>
+    <div class="brow">
+      <button class="btn btng" onclick="doCheck()">✓ 채점</button>
+      <button class="btn" onclick="doSolution()">모범답안</button>
+      <button class="btn" onclick="doReset()">↺ 리셋</button>
+      <button class="btn" onclick="newQ()">새 문제</button>
+    </div>
+    <div class="sarea" id="sarea"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════
+function rnd(a){return a[Math.floor(Math.random()*a.length)];}
+function h(v){return '<span class="hl">'+v+'</span>';}
+function pad(s,n){s=String(s);while(s.length<n)s+=' ';return s;}
+
+// ══════════════════════════════════════════════════════════════
+// QUESTION DEFINITIONS
+// ══════════════════════════════════════════════════════════════
+var QUESTIONS = [];
+
+/* ── 1. NetFlow/SPAN/SLA Type A: Exporter UDP + SPAN single + SLA schedule ── */
+function makeQ_NF_A(){
+  var udp=rnd([2055,9996,4739,6343,2056]);
+  var sess=rnd([1,2,3,5,7,10,11,12,15,20]);
+  var slaOp=rnd([1,5,10,50,100,200]);
+  var srcIf=rnd(['e0/1','e0/2','e0/3','e1/0','e1/1']);
+  var dstIf=rnd(['e1/1','e1/2','e1/3','e2/0','e2/1']);while(dstIf===srcIf)dstIf=rnd(['e1/1','e1/2','e1/3','e2/0','e2/1']);
+  var expName=rnd(['Export-NetFlowENCOR','Export-NetFlowData','NETFLOW-EXP','NF-COLLECTOR','ENCOR-EXPORTER']);
+  var monName=rnd(['Monitor-NetFlowR1','Monitor-FlowR1','Monitor-R1Flow','NF-MONITOR']);
+  var base=rnd(['10.10','10.20','192.168.1','172.16.1']);
+  var vM=rnd([10,20,30]);var vP1=rnd([12,13,22]);var vP2=rnd([14,16,24]);
+  var r1ip=base+'.1.2',swM=base+'.1.1',swP1=base+'.'+vP1+'.1',swP2=base+'.'+vP2+'.1';
+  var pc1=base+'.'+vP1+'.2',pc2=base+'.'+vP2+'.2';
+  var sw1Loops=[{if:'Loopback0',ip:rnd(['2.2.2.2','3.3.3.3','5.5.5.5'])}];
+  return {
+    cat:'NetFlow/SPAN/SLA',subtype:'A',
+    devices:['R1','Sw1'],
+    vars:{udp,sess,slaOp,srcIf,dstIf,expName,monName,vM,vP1,vP2,r1ip,swM,swP1,swP2,pc1,pc2,sw1Loops},
+    taskIntro:'The Operations team started configuring several monitoring activities. Complete the configurations for the tasks below.',
+    tasks:[
+      'Complete the Flexible NetFlow <b>Flow Exporter</b> configuration on R1 to send data to the collector using '+h('UDP port '+udp)+'.',
+      'Configure the switch port analyzer on Sw1 and mirror all communication to and from PC1 to interface '+h(dstIf)+' using session number '+h(sess)+'.',
+      'Schedule the pre-configured IP SLA operation on R1 to start running <b>immediately</b> and to run <b>indefinitely</b>.'
+    ],
+    // pre-configured show run output per device
+    showRun:{
+      R1:[
+        '! Last configuration change at 00:14:33 UTC',
+        '!','version 16.9','service timestamps debug datetime msec','!',
+        'hostname R1','!','enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0','!',
+        'interface Loopback0',' ip address 1.1.1.1 255.255.255.255','!',
+        'interface Ethernet0/0',' ip address '+r1ip+' 255.255.255.0','!',
+        'flow exporter '+expName,'!',  // <-- pre-configured name, missing transport
+        'flow monitor '+monName,' exporter '+expName,' cache timeout active 60',' record netflow ipv4 original-input','!',
+        'ip sla '+slaOp,'!',           // <-- pre-configured op, missing schedule
+        'ip route 0.0.0.0 0.0.0.0 '+swM,'!',
+        'line con 0',' logging synchronous','line vty 0 4',' login local','!'
+      ],
+      Sw1:[
+        '!','hostname Sw1','!','enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0','!',
+        'interface Loopback0',' ip address '+sw1Loops[0].ip+' 255.255.255.255','!',
+        'interface Vlan'+vM,' ip address '+swM+' 255.255.255.0',' no shutdown','!',
+        'interface Vlan'+vP1,' ip address '+swP1+' 255.255.255.0',' no shutdown','!',
+        'interface Vlan'+vP2,' ip address '+swP2+' 255.255.255.0',' no shutdown','!',
+        'interface Ethernet0/0',' switchport trunk encapsulation dot1q',' switchport mode trunk','!',
+        'interface Ethernet0/1',' switchport access vlan '+vP1,' switchport mode access','!',
+        'interface Ethernet0/2',' switchport access vlan '+vP2,' switchport mode access','!',
+        'ip routing','!'
+      ]
+    },
+    showIpIntBrief:{
+      R1:['Loopback0              1.1.1.1         YES manual up  up','Ethernet0/0            '+r1ip+'    YES manual up  up'],
+      Sw1:['Loopback0              '+sw1Loops[0].ip+'    YES manual up  up','Vlan'+vM+'               '+swM+'    YES manual up  up','Vlan'+vP1+'              '+swP1+'   YES manual up  up']
+    },
+    checks:[
+      {l:'R1 NetFlow transport UDP '+udp, ok:function(sc){return sc.nfDone;}},
+      {l:'Sw1 SPAN src '+srcIf+' sess '+sess, ok:function(sc){return sc.spanSrc;}},
+      {l:'Sw1 SPAN dst '+dstIf, ok:function(sc){return sc.spanDst;}},
+      {l:'R1 IP SLA '+slaOp+' forever+now', ok:function(sc){return sc.slaDone;}}
+    ],
+    solution:{
+      R1:['R1>enable','R1#configure terminal',
+          '###Run "show run" to verify exporter name is "'+expName+'"',
+          'R1(config)#flow exporter '+expName,
+          'R1(config-flow-exporter)#transport udp '+udp,
+          'R1(config-flow-exporter)#exit',
+          '###Run "show run | sec sla" to verify SLA ID is "'+slaOp+'"',
+          'R1(config)#ip sla schedule '+slaOp+' life forever start-time now',
+          'R1(config)#end','R1#write memory'],
+      Sw1:['Sw1>enable','Sw1#configure terminal',
+           'Sw1(config)#monitor session '+sess+' source interface '+srcIf+' both',
+           'Sw1(config)#monitor session '+sess+' destination interface '+dstIf,
+           'Sw1(config)#end','Sw1#write memory']
+    },
+    topo:{type:'netflow',vM,vP1,vP2,r1ip,swM,swP1,swP2,pc1,pc2}
+  };
+}
+
+/* ── 2. NetFlow/SPAN/SLA Type B: Exporter destination IP + SPAN multi-src + HTTP GET ── */
+function makeQ_NF_B(){
+  var sess=rnd([1,2,3,5,7,10,11,12,15,20]);
+  var slaOp=rnd([1,5,10,50,100,200]);
+  var srcIf=rnd(['e0/1','e0/2','e0/3']);
+  var srcIf2=rnd(['e1/0','e1/1','e1/2']);
+  var dstIf=rnd(['e1/0','e1/1','e1/3','e2/0']);
+  var expName=rnd(['Export-NetFlowENCOR','Export-NetFlowData','NETFLOW-EXP','NF-COLLECTOR']);
+  var destIP=rnd(['10.10.1.10','10.10.1.20','10.20.1.10','192.168.1.100']);
+  var freq=rnd([60,120,300,600]);
+  var base=rnd(['10.10','10.20','192.168.1']);
+  var vM=rnd([10,20]);var vP1=rnd([12,13]);var vP2=rnd([14,16]);
+  var r1ip=base+'.1.2',swM=base+'.1.1',swP1=base+'.'+vP1+'.1',swP2=base+'.'+vP2+'.1';
+  var pc1=base+'.'+vP1+'.2',pc2=base+'.'+vP2+'.2';
+  var monName=rnd(['Monitor-NetFlowR1','Monitor-FlowR1','NF-MONITOR']);
+  return {
+    cat:'NetFlow/SPAN/SLA',subtype:'B',
+    devices:['R1','Sw1'],
+    vars:{sess,slaOp,srcIf,srcIf2,dstIf,expName,monName,destIP,freq,vM,vP1,vP2,r1ip,swM,swP1,swP2,pc1,pc2},
+    taskIntro:'The Operations team started configuring several monitoring activities. Complete the configurations for the tasks below.',
+    tasks:[
+      'Complete the Flexible NetFlow <b>Flow Exporter</b> configuration on R1 to send data to the collector located at '+h(destIP)+'.',
+      'Configure the switch port analyzer on Sw1 and mirror all communication to and from PC1 and PC2 to interface '+h(dstIf)+' using session number '+h(sess)+'.',
+      'Configure a basic IP SLA <b>HTTP GET</b> operation on R1 to monitor the server at '+h('http://'+destIP)+' every '+h(freq+' seconds')+'.'
+    ],
+    showRun:{
+      R1:['!','hostname R1','!','enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0','!',
+          'interface Ethernet0/0',' ip address '+r1ip+' 255.255.255.0','!',
+          'flow exporter '+expName,' transport udp 9996',' export-protocol netflow-v9','!',  // transport pre-configured, destination missing
+          'flow monitor '+monName,' exporter '+expName,' cache timeout active 60',' record netflow ipv4 original-input','!',
+          'ip route 0.0.0.0 0.0.0.0 '+swM,'!'],
+      Sw1:['!','hostname Sw1','!',
+           'interface Vlan'+vM,' ip address '+swM+' 255.255.255.0',' no shutdown','!',
+           'interface Ethernet0/0',' switchport trunk encapsulation dot1q',' switchport mode trunk','!',
+           'interface Ethernet0/1',' switchport access vlan '+vP1,' switchport mode access','!',
+           'interface Ethernet0/2',' switchport access vlan '+vP2,' switchport mode access','!','ip routing','!']
+    },
+    showIpIntBrief:{
+      R1:['Ethernet0/0            '+r1ip+'    YES manual up  up'],
+      Sw1:['Vlan'+vM+'               '+swM+'    YES manual up  up']
+    },
+    checks:[
+      {l:'R1 NetFlow destination '+destIP, ok:function(sc){return sc.nfDone;}},
+      {l:'Sw1 SPAN src '+srcIf+','+srcIf2+' sess '+sess, ok:function(sc){return sc.spanSrc;}},
+      {l:'Sw1 SPAN dst '+dstIf, ok:function(sc){return sc.spanDst;}},
+      {l:'R1 HTTP GET every '+freq+'s + scheduled', ok:function(sc){return sc.slaDone;}}
+    ],
+    solution:{
+      R1:['R1>enable','R1#configure terminal',
+          'R1(config)#flow exporter '+expName,
+          'R1(config-flow-exporter)#destination '+destIP,
+          'R1(config-flow-exporter)#exit',
+          'R1(config)#ip sla '+slaOp,
+          'R1(config-ip-sla)#http get http://'+destIP,
+          'R1(config-ip-sla-http)#frequency '+freq,
+          'R1(config-ip-sla-http)#exit',
+          'R1(config)#ip sla schedule '+slaOp+' life forever start-time now',
+          'R1(config)#end','R1#write memory'],
+      Sw1:['Sw1>enable','Sw1#configure terminal',
+           'Sw1(config)#monitor session '+sess+' source interface '+srcIf+','+srcIf2+' both',
+           'Sw1(config)#monitor session '+sess+' destination interface '+dstIf,
+           'Sw1(config)#end','Sw1#write memory']
+    },
+    topo:{type:'netflow',vM,vP1,vP2,r1ip,swM,swP1,swP2,pc1,pc2}
+  };
+}
+
+/* ── 3. NetFlow/SPAN/SLA Type C: flow monitor interface + SPAN vlan + ICMP echo ── */
+function makeQ_NF_C(){
+  var sess=rnd([5,7,10,11,12,15,20]);
+  var slaOp=rnd([1,5,10,50,100,200]);
+  var dstIf=rnd(['e0/3','e1/0','e1/1','e1/2','e1/3','e2/0']);
+  var monName=rnd(['Monitor-NetFlowR1','Monitor-FlowR1','Monitor-R1Flow','NF-MONITOR']);
+  var freq=rnd([60,120,300,600]);
+  var vlan=rnd([10,12,14,20]);
+  var loopIP=rnd(['2.2.2.2','3.3.3.3','5.5.5.5','10.10.10.1']);
+  var base=rnd(['10.10','10.20','192.168.1']);
+  var vM=rnd([10,20]);var vP1=rnd([12,13]);var vP2=rnd([14,16]);
+  var r1ip=base+'.1.2',swM=base+'.1.1';
+  return {
+    cat:'NetFlow/SPAN/SLA',subtype:'C',
+    devices:['R1','Sw1'],
+    vars:{sess,slaOp,dstIf,monName,freq,vlan,loopIP,r1ip,swM,vM,vP1,vP2},
+    taskIntro:'The Operations team started configuring several monitoring activities. Complete the configurations for the tasks below.',
+    tasks:[
+      'Enable Flexible NetFlow on R1 E0/0 in <b>both directions</b> using the pre-configured flow monitor.',
+      'Configure the switch port analyzer on Sw1 and mirror all VLAN '+h(vlan)+' traffic to interface '+h(dstIf)+' using session number '+h(sess)+'.',
+      'Configure a basic IP SLA <b>ICMP echo</b> operation on R1 to ping Sw1\'s Loopback interface every '+h(freq+' seconds')+'. Then schedule it to run immediately and indefinitely.'
+    ],
+    showRun:{
+      R1:['!','hostname R1','!',
+          'interface Loopback0',' ip address 1.1.1.1 255.255.255.255','!',
+          'interface Ethernet0/0',' ip address '+r1ip+' 255.255.255.0',
+          ' ! ip flow monitor '+monName+' input   <-- NOT YET CONFIGURED',
+          ' ! ip flow monitor '+monName+' output  <-- NOT YET CONFIGURED','!',
+          'flow monitor '+monName,' cache timeout active 60',' record netflow ipv4 original-input','!',
+          'ip sla '+slaOp,'!',
+          'ip route 0.0.0.0 0.0.0.0 '+swM,'!'],
+      Sw1:['!','hostname Sw1','!',
+           'interface Loopback0',' ip address '+loopIP+' 255.255.255.255','!',
+           'interface Vlan'+vM,' ip address '+swM+' 255.255.255.0',' no shutdown','!',
+           'interface Ethernet0/0',' switchport trunk encapsulation dot1q',' switchport mode trunk','!',
+           'ip routing','!']
+    },
+    showIpIntBrief:{
+      R1:['Loopback0              1.1.1.1         YES manual up  up','Ethernet0/0            '+r1ip+'    YES manual up  up'],
+      Sw1:['Loopback0              '+loopIP+'    YES manual up  up','Vlan'+vM+'               '+swM+'    YES manual up  up']
+    },
+    checks:[
+      {l:'R1 ip flow monitor '+monName+' input', ok:function(sc){return sc.nfIn;}},
+      {l:'R1 ip flow monitor '+monName+' output', ok:function(sc){return sc.nfOut;}},
+      {l:'Sw1 SPAN src vlan '+vlan+' sess '+sess, ok:function(sc){return sc.spanSrc;}},
+      {l:'Sw1 SPAN dst '+dstIf, ok:function(sc){return sc.spanDst;}},
+      {l:'R1 ICMP echo '+loopIP+' freq '+freq+'s + scheduled', ok:function(sc){return sc.slaDone;}}
+    ],
+    solution:{
+      R1:['R1>enable','R1#configure terminal',
+          '###Run "show run | sec sla" to verify SLA ID is "'+slaOp+'"',
+          'R1(config)#ip sla '+slaOp,
+          '###Run "show ip int brief" on Sw1 to verify Loopback IP is "'+loopIP+'"',
+          'R1(config-ip-sla)#icmp-echo '+loopIP,
+          'R1(config-ip-sla)#frequency '+freq,
+          'R1(config-ip-sla)#exit',
+          'R1(config)#ip sla schedule '+slaOp+' life forever start-time now',
+          '###Run "show flow monitor" to verify monitor name is "'+monName+'"',
+          'R1(config)#interface Ethernet0/0',
+          'R1(config-if)#ip flow monitor '+monName+' input',
+          'R1(config-if)#ip flow monitor '+monName+' output',
+          'R1(config-if)#end','R1#write memory'],
+      Sw1:['Sw1>enable','Sw1#configure terminal',
+           'Sw1(config)#monitor session '+sess+' source vlan '+vlan+' both',
+           'Sw1(config)#monitor session '+sess+' destination interface '+dstIf,
+           'Sw1(config)#end','Sw1#write memory']
+    },
+    topo:{type:'netflow',vM,vP1,vP2,r1ip,swM}
+  };
+}
+
+/* ── 4. NetFlow/SPAN/SLA Type D: flow monitor + ICMP ping PC + SPAN with bullet settings ── */
+function makeQ_NF_D(){
+  var sess=rnd([1,2,3,5,7,10,11,12,15,20]);
+  var slaOp=rnd([1,5,10,50,100,200]);
+  var srcIf=rnd(['e0/2','e0/3','e1/0','e1/1','e2/0']);
+  var dstIf=rnd(['e1/0','e1/1','e1/2','e1/3','e2/1']);while(dstIf===srcIf)dstIf=rnd(['e1/0','e1/1','e1/2','e1/3','e2/1']);
+  var monName=rnd(['Monitor-NetFlowR1','Monitor-FlowR1','Monitor-R1Flow','NF-MONITOR','Monitor-FlowR1']);
+  var freq=rnd([60,120,300,600]);
+  var base=rnd(['10.10','10.20','192.168.1']);
+  var vM=rnd([10,20]);var vP1=rnd([12,13]);var vP2=rnd([14,16]);
+  var r1ip=base+'.1.2',swM=base+'.1.1',swP1=base+'.'+vP1+'.1',swP2=base+'.'+vP2+'.1';
+  var pc1=base+'.'+vP1+'.2',pc2=base+'.'+vP2+'.2';
+  return {
+    cat:'NetFlow/SPAN/SLA',subtype:'D',
+    devices:['R1','Sw1'],
+    vars:{sess,slaOp,srcIf,dstIf,monName,freq,vM,vP1,vP2,r1ip,swM,swP1,swP2,pc1,pc2},
+    taskIntro:'The Operations team started configuring several monitoring activities. Complete the configurations for the tasks below.',
+    tasks:[
+      'Enable Flexible NetFlow on R1 E0/0 in <b>both directions</b> using the pre-configured flow monitor.',
+      'Configure a basic IP SLA <b>ICMP echo</b> operation on R1 to ping PC1 every '+h(freq+' seconds')+'. Then schedule it to run immediately and indefinitely.',
+      'Configure the switch port analyzer on Sw1 using these settings:'
+    ],
+    bullets:'<ul style="list-style:disc;padding-left:18px;"><li>Session number '+h(sess)+'</li><li>Mirror all traffic on '+h(srcIf)+'</li><li>Direct output to interface '+h(dstIf)+'</li></ul>',
+    showRun:{
+      R1:['!','hostname R1','!',
+          'interface Loopback0',' ip address 1.1.1.1 255.255.255.255','!',
+          'interface Ethernet0/0',' ip address '+r1ip+' 255.255.255.0','!',
+          'flow monitor '+monName,' cache timeout active 60',' record netflow ipv4 original-input','!',
+          'ip sla '+slaOp,'!',
+          'ip route 0.0.0.0 0.0.0.0 '+swM,'!'],
+      Sw1:['!','hostname Sw1','!',
+           'interface Vlan'+vM,' ip address '+swM+' 255.255.255.0',' no shutdown','!',
+           'interface Ethernet0/1',' switchport access vlan '+vP1,' switchport mode access','!',
+           'ip routing','!']
+    },
+    showIpIntBrief:{
+      R1:['Loopback0              1.1.1.1         YES manual up  up','Ethernet0/0            '+r1ip+'    YES manual up  up'],
+      Sw1:['Vlan'+vM+'               '+swM+'    YES manual up  up','Vlan'+vP1+'              '+swP1+'   YES manual up  up']
+    },
+    checks:[
+      {l:'R1 ip flow monitor input', ok:function(sc){return sc.nfIn;}},
+      {l:'R1 ip flow monitor output', ok:function(sc){return sc.nfOut;}},
+      {l:'R1 ICMP echo '+pc1+' freq '+freq+'s + scheduled', ok:function(sc){return sc.slaDone;}},
+      {l:'Sw1 SPAN src '+srcIf+' sess '+sess, ok:function(sc){return sc.spanSrc;}},
+      {l:'Sw1 SPAN dst '+dstIf, ok:function(sc){return sc.spanDst;}}
+    ],
+    solution:{
+      R1:['R1>enable','R1#configure terminal',
+          '###Run "show run | sec sla" to verify SLA ID is "'+slaOp+'"',
+          'R1(config)#ip sla '+slaOp,
+          'R1(config-ip-sla)#icmp-echo '+pc1,
+          'R1(config-ip-sla)#frequency '+freq,
+          'R1(config-ip-sla)#exit',
+          'R1(config)#ip sla schedule '+slaOp+' life forever start-time now',
+          '###Run "show flow monitor" to verify monitor name is "'+monName+'"',
+          'R1(config)#interface Ethernet0/0',
+          'R1(config-if)#ip flow monitor '+monName+' input',
+          'R1(config-if)#ip flow monitor '+monName+' output',
+          'R1(config-if)#end','R1#write memory'],
+      Sw1:['Sw1>enable','Sw1#configure terminal',
+           'Sw1(config)#monitor session '+sess+' source interface '+srcIf+' both',
+           'Sw1(config)#monitor session '+sess+' destination interface '+dstIf,
+           'Sw1(config)#end','Sw1#write memory']
+    },
+    topo:{type:'netflow',vM,vP1,vP2,r1ip,swM,swP1,swP2,pc1,pc2}
+  };
+}
+
+/* ── 5. OSPF: ip ospf (no network stmt) + area range ── */
+function makeQ_OSPF_A(){
+  var pid=rnd([10,20,30,100]);
+  var stub=rnd([40,50]);
+  var loopOct=rnd([10,20,30]);
+  var loopIP=loopOct+'.'+loopOct+'.'+loopOct+'.'+loopOct;
+  var summaries={40:['10.40.0.0 255.255.128.0','10.40.32.0 255.255.224.0','10.40.48.0 255.255.240.0'],50:['10.50.0.0 255.255.128.0','10.50.0.0 255.255.192.0']};
+  var summ=rnd(summaries[stub]).split(' ');
+  var devName=rnd(['R20','R30']);
+  var loopNum=rnd([0,1]);
+  return {
+    cat:'OSPF',subtype:'A',
+    devices:[devName],
+    vars:{pid,stub,loopIP,loopNum,summNet:summ[0],summMask:summ[1],devName},
+    taskIntro:'OSPF is preconfigured on all devices except '+devName+'. Configure '+devName+' to complete these tasks.',
+    tasks:[
+      '<u>Task 1</u><br>Configure OSPF according to the topology:<ul style="padding-left:18px;margin-top:4px;"><li>Use Process ID '+h(pid)+'.</li><li>Use Loopback'+loopNum+' for the Router ID.</li><li>Advertise all networks into OSPF.</li><li>Do <b>not</b> use network statements under the OSPF process.</li></ul>',
+      '<u>Task 2</u><br>Configure a /'+maskToPrefix(summ[1])+' summary route for Area '+h(stub)+'.'
+    ],
+    showRun:{
+      [devName]:[
+        '!','hostname '+devName,'!','enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0','!',
+        'interface Loopback0',' ip address '+loopIP+' 255.255.255.255','!',
+        loopNum===1?'interface Loopback1':'! Loopback1 not configured',
+        loopNum===1?' ip address '+loopIP+' 255.255.255.255':'',
+        '!',
+        'interface Ethernet0/0',' ip address 10.10.20.1 255.255.255.0','!',
+        'interface Ethernet0/1',' ip address 10.20.30.1 255.255.255.0','!',
+        'interface Ethernet0/2',' ip address 10.'+stub+'.50.1 255.255.255.0','!',
+        'ip routing','!'
+      ]
+    },
+    showIpIntBrief:{
+      [devName]:['Loopback0              '+loopIP+'   YES manual up  up','Ethernet0/0            10.10.20.1    YES manual up  up','Ethernet0/1            10.20.30.1    YES manual up  up','Ethernet0/2            10.'+stub+'.50.1  YES manual up  up']
+    },
+    checks:[
+      {l:'router ospf '+pid, ok:function(sc){return sc.ospfProc;}},
+      {l:'router-id '+loopIP, ok:function(sc){return sc.ospfRid;}},
+      {l:'ip ospf '+pid+' area 0 (interfaces)', ok:function(sc){return sc.ospfIface;}},
+      {l:'ip ospf '+pid+' area '+stub+' (e0/2)', ok:function(sc){return sc.ospfStub;}},
+      {l:'area '+stub+' range '+summ[0], ok:function(sc){return sc.ospfRange;}}
+    ],
+    solution:{
+      [devName]:[
+        devName+'>enable',devName+'#configure terminal',
+        '###Run "show run int lo'+loopNum+'" to verify Loopback'+loopNum+' IP is "'+loopIP+'"',
+        devName+'(config)#router ospf '+pid,
+        devName+'(config-router)#router-id '+loopIP,
+        devName+'(config-router)#area '+stub+' range '+summ[0]+' '+summ[1],
+        devName+'(config-router)#exit',
+        devName+'(config)#interface range loopback'+loopNum+',Ethernet0/0-1',
+        devName+'(config-if-range)#ip ospf '+pid+' area 0',
+        devName+'(config-if-range)#interface Ethernet0/2',
+        devName+'(config-if)#ip ospf '+pid+' area '+stub,
+        devName+'(config-if)#end',devName+'#write memory'
+      ]
+    },
+    topo:{type:'ospf',stub}
+  };
+}
+
+/* ── 6. OSPF: network statements version ── */
+function makeQ_OSPF_B(){
+  var pid=rnd([10,20,100,200]);
+  var stub=rnd([40,50]);
+  var loopOct=rnd([10,20,30]);
+  var loopIP=loopOct+'.'+loopOct+'.'+loopOct+'.'+loopOct;
+  var summaries={40:['10.40.0.0 255.255.128.0','10.40.0.0 255.255.192.0','10.40.48.0 255.255.240.0'],50:['10.50.0.0 255.255.128.0','10.50.0.0 255.255.192.0']};
+  var summ=rnd(summaries[stub]).split(' ');
+  var devName=rnd(['R20','R30']);
+  var loopNum=rnd([0,1]);
+  return {
+    cat:'OSPF',subtype:'B',
+    devices:[devName],
+    vars:{pid,stub,loopIP,loopNum,summNet:summ[0],summMask:summ[1],devName},
+    taskIntro:'OSPF is preconfigured on all devices except '+devName+'. Configure '+devName+' to complete these tasks.',
+    tasks:[
+      '<u>Task 1</u><br>Configure OSPF according to the topology:<ul style="padding-left:18px;margin-top:4px;"><li>Use Process ID '+h(pid)+'.</li><li>Use Loopback'+loopNum+' for the Router ID.</li><li>Advertise all networks into OSPF.</li><li>Use <b>network statements</b> under the OSPF process.</li></ul>',
+      '<u>Task 2</u><br>Configure a /'+maskToPrefix(summ[1])+' summary route for Area '+h(stub)+'.'
+    ],
+    showRun:{
+      [devName]:[
+        '!','hostname '+devName,'!',
+        'interface Loopback0',' ip address '+loopIP+' 255.255.255.255','!',
+        loopNum===1?'interface Loopback1'+'':' ',
+        loopNum===1?' ip address '+loopIP+' 255.255.255.255':'',
+        '!',
+        'interface Ethernet0/0',' ip address 10.10.20.1 255.255.255.0','!',
+        'interface Ethernet0/1',' ip address 10.20.30.1 255.255.255.0','!',
+        'interface Ethernet0/2',' ip address 10.'+stub+'.50.1 255.255.255.0','!',
+        'ip routing','!'
+      ]
+    },
+    showIpIntBrief:{
+      [devName]:['Loopback'+loopNum+'              '+loopIP+'   YES manual up  up','Ethernet0/0            10.10.20.1    YES manual up  up','Ethernet0/2            10.'+stub+'.50.1  YES manual up  up']
+    },
+    checks:[
+      {l:'router ospf '+pid, ok:function(sc){return sc.ospfProc;}},
+      {l:'router-id '+loopIP, ok:function(sc){return sc.ospfRid;}},
+      {l:'network statements (area 0)', ok:function(sc){return sc.ospfNet;}},
+      {l:'network area '+stub, ok:function(sc){return sc.ospfNetStub;}},
+      {l:'area '+stub+' range '+summ[0], ok:function(sc){return sc.ospfRange;}}
+    ],
+    solution:{
+      [devName]:[
+        devName+'>enable',devName+'#configure terminal',
+        devName+'(config)#router ospf '+pid,
+        devName+'(config-router)#router-id '+loopIP,
+        devName+'(config-router)#network '+loopIP+' 0.0.0.0 area 0',
+        devName+'(config-router)#network 10.10.20.0 0.0.0.255 area 0',
+        devName+'(config-router)#network 10.20.30.0 0.0.0.255 area 0',
+        devName+'(config-router)#network 10.'+stub+'.50.0 0.0.0.255 area '+stub,
+        devName+'(config-router)#area '+stub+' range '+summ[0]+' '+summ[1],
+        devName+'(config-router)#end',devName+'#write memory'
+      ]
+    },
+    topo:{type:'ospf',stub}
+  };
+}
+
+/* ── 7. VRF + GRE Tunnel ── */
+function makeQ_VRF(){
+  var vrf=rnd(['Finance','FINANCE']);
+  var tunNum=rnd([0,10]);
+  var target=rnd(['R11','R22']);
+  var other=target==='R11'?'R22':'R11';
+  var tunSrc='Ethernet0/0';
+  var tunDest=rnd(['209.165.200.230','209.165.201.6','209.165.201.2','209.165.201.4']);
+  var e01ip=target==='R11'?'10.11.11.1':'10.22.22.1';
+  var e01other=target==='R11'?'10.11.11.2':'10.22.22.2';
+  var tunIPme=target==='R11'?'10.10.100.1':'10.10.100.2';
+  var tunIPother=target==='R11'?'10.10.100.2':'10.10.100.1';
+  var vlan111net='10.10.111.0',vlan222net='10.10.222.0';
+  return {
+    cat:'VRF+Tunnel',subtype:'A',
+    devices:[target],
+    vars:{vrf,tunNum,target,other,tunSrc,tunDest,e01ip,e01other,tunIPme,tunIPother,vlan111net,vlan222net},
+    taskIntro:'A colleague started configuring a new network. All configurations on '+other+' are complete and communication between '+target+' and '+other+' is functional. Complete the configurations on '+target+' for the tasks below.',
+    tasks:[
+      '<u>Task 1</u><br>Extend the '+h(vrf)+' VRF between '+target+' and '+other+' using '+h('Tunnel '+tunNum)+'.',
+      '<u>Task 2</u><br>Complete the '+vrf+' VRF configuration on '+target+' and configure static routing so that traffic between VLAN 111 and VLAN 222 uses Tunnel '+tunNum+' exclusively.<br><small style="color:#8b949e;">Note: '+other.replace('R','Sw')+' can be used to validate traffic flow.</small>'
+    ],
+    showRun:{
+      [target]:[
+        '!','hostname '+target,'!','enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0','!',
+        'vrf definition '+vrf,' address-family ipv4','  exit-address-family','!',
+        'interface Ethernet0/0',' ip address 209.165.200.226 255.255.255.252','!',
+        'interface Ethernet0/1',' ! ip vrf forwarding '+vrf+'  <-- NOT YET CONFIGURED','!',
+        'interface Tunnel'+tunNum,' ! ip vrf forwarding '+vrf+'  <-- NOT YET CONFIGURED','!',
+        'ip route 0.0.0.0 0.0.0.0 209.165.200.225','!'
+      ]
+    },
+    showIpIntBrief:{
+      [target]:['Ethernet0/0            209.165.200.226   YES manual up  up','Ethernet0/1            unassigned        YES unset  administratively down  down','Tunnel'+tunNum+'                 unassigned        YES unset  down  down']
+    },
+    checks:[
+      {l:target+' Eth0/1 ip vrf forwarding '+vrf, ok:function(sc){return sc.vrfIface;}},
+      {l:target+' Tunnel'+tunNum+' ip vrf forwarding '+vrf, ok:function(sc){return sc.tunVrf;}},
+      {l:target+' Tunnel'+tunNum+' source+destination', ok:function(sc){return sc.tunSrcDst;}},
+      {l:target+' ip route vrf '+vrf+' configured', ok:function(sc){return sc.vrfRoute;}}
+    ],
+    solution:{
+      [target]:[
+        target+'>enable',target+'#configure terminal',
+        target+'(config)#interface Ethernet0/1',
+        target+'(config-if)#ip vrf forwarding '+vrf,
+        target+'(config-if)#ip address '+e01ip+' 255.255.255.252',
+        target+'(config-if)#no shutdown',
+        target+'(config-if)#exit',
+        target+'(config)#interface Tunnel'+tunNum,
+        target+'(config-if)#ip vrf forwarding '+vrf,
+        target+'(config-if)#ip address '+tunIPme+' 255.255.255.252',
+        target+'(config-if)#tunnel source Ethernet0/0',
+        target+'(config-if)#tunnel destination '+tunDest,
+        target+'(config-if)#no shutdown',
+        target+'(config-if)#exit',
+        target+'(config)#ip route vrf '+vrf+' '+vlan111net+' 255.255.255.0 '+e01other,
+        target+'(config)#ip route vrf '+vrf+' '+vlan222net+' 255.255.255.0 '+tunIPother,
+        target+'(config)#end',target+'#write memory'
+      ]
+    },
+    topo:{type:'vrf',vrf,tunNum,target,other}
+  };
+}
+
+/* ── 8. EtherChannel LACP + STP ── */
+function makeQ_EC(){
+  var poNum=rnd([1,2,5,10,20,21]);
+  var oldPo=rnd([1,2,5,10,11]);while(oldPo===poNum)oldPo=rnd([1,2,5,10,11]);
+  var ifCount=rnd([2,3]);
+  var ifRange=ifCount===2?'Ethernet0/0-1':'Ethernet0/0-2';
+  var vlans=rnd(['10','20','10,20','10,30','12','20,30','10,20,30']);
+  return {
+    cat:'EtherChannel+STP',subtype:'A',
+    devices:['Sw10'],
+    vars:{poNum,oldPo,ifRange,vlans},
+    taskIntro:'Complete the tasks below by making changes to Sw10 only. No access is provided to Sw20 or Sw30.',
+    tasks:[
+      '<u>Task 1</u><br>Sw20 is actively attempting to negotiate an 802.1Q trunking EtherChannel with Sw10 using <b>LACP</b>, but the channel is not functional. Resolve the issues on Sw10.',
+      '<u>Task 2</u><br>Modify the spanning tree configuration to ensure that Sw10 is always the root for VLAN '+h(vlans)+'.'
+    ],
+    showRun:{
+      Sw10:[
+        '!','hostname Sw10','!',
+        'interface Port-channel'+oldPo,' switchport trunk encapsulation dot1q',' switchport mode trunk','!',
+        'interface Ethernet0/0',' switchport trunk encapsulation dot1q',' switchport mode trunk',' channel-group '+oldPo+' mode on','!',
+        'interface Ethernet0/1',' switchport trunk encapsulation dot1q',' switchport mode trunk',' channel-group '+oldPo+' mode on','!',
+        '! <-- PROBLEM: channel-group mode "on" should be "active" for LACP',
+        '! <-- PROBLEM: Port-channel number may conflict',
+        'spanning-tree mode pvst','!'
+      ]
+    },
+    showIpIntBrief:{
+      Sw10:['Vlan1                  unassigned        YES unset  up  up','Port-channel'+oldPo+'        unassigned        YES unset  up  up']
+    },
+    checks:[
+      {l:'no interface Port-channel'+oldPo, ok:function(sc){return sc.noOldPo;}},
+      {l:ifRange+' channel-group '+poNum+' mode active', ok:function(sc){return sc.lacp;}},
+      {l:'Port-channel'+poNum+' trunk configured', ok:function(sc){return sc.poTrunk;}},
+      {l:'spanning-tree vlan '+vlans+' priority 0', ok:function(sc){return sc.stpRoot;}}
+    ],
+    solution:{
+      Sw10:['Sw10>enable','Sw10#configure terminal',
+            'Sw10(config)#no interface Port-channel'+oldPo,
+            'Sw10(config)#interface range '+ifRange,
+            'Sw10(config-if-range)#switchport trunk encapsulation dot1q',
+            'Sw10(config-if-range)#switchport mode trunk',
+            'Sw10(config-if-range)#channel-group '+poNum+' mode active',
+            'Sw10(config-if-range)#no shutdown',
+            'Sw10(config-if-range)#exit',
+            'Sw10(config)#interface Port-channel'+poNum,
+            'Sw10(config-if)#switchport trunk encapsulation dot1q',
+            'Sw10(config-if)#switchport mode trunk',
+            'Sw10(config-if)#no shutdown',
+            'Sw10(config-if)#exit',
+            'Sw10(config)#spanning-tree vlan '+vlans+' priority 0',
+            'Sw10(config)#end','Sw10#write memory']
+    },
+    topo:{type:'etherchannel',poNum,oldPo,vlans}
+  };
+}
+
+/* ── 9. eBGP ── */
+function makeQ_BGP(){
+  var localAs=rnd([1,10,100]);
+  var as2=rnd([2,20,200]);
+  var as3=rnd([3,30,300]);
+  var loopOct=rnd([1,2,3,4,5]);
+  var rid=loopOct+'.'+loopOct+'.'+loopOct+'.'+loopOct;
+  var net2Oct=rnd([11,22,33,44]);
+  var net2=net2Oct+'.'+net2Oct+'.'+net2Oct+'.'+net2Oct;
+  var net3Oct=rnd([111,100,200]);
+  var net3=net3Oct+'.'+net3Oct+'.'+net3Oct+'.'+net3Oct;
+  var neigh1='209.165.200.'+rnd([225,226,229]);
+  var neigh2='209.165.202.'+rnd([129,130,128]);
+  return {
+    cat:'eBGP',subtype:'A',
+    devices:['R1'],
+    vars:{localAs,as2,as3,rid,net2,net3,neigh1,neigh2},
+    taskIntro:'eBGP is configured on R2 and R3. Configure R1 to complete these tasks.',
+    tasks:[
+      '<u>Task 1</u><br>Using the address-family command, configure eBGP according to the topology. Use Loopback0 for the router-id.',
+      '<u>Task 2</u><br>Advertise R1\'s Loopback 0, 1, and 2 networks to AS '+h(as2)+' and AS '+h(as3)+'.'
+    ],
+    showRun:{
+      R1:['!','hostname R1','!',
+          'interface Loopback0',' ip address '+rid+' 255.255.255.255','!',
+          'interface Loopback1',' ip address '+net2+' 255.255.255.255','!',
+          'interface Loopback2',' ip address '+net3+' 255.255.255.255','!',
+          'interface Ethernet0/0',' ip address '+neigh1.replace(/\d+$/,'226')+' 255.255.255.252','!',
+          'interface Ethernet0/1',' ip address '+neigh2.replace(/\d+$/,'130')+' 255.255.255.252','!',
+          'ip route 0.0.0.0 0.0.0.0 209.165.200.225','!'
+      ]
+    },
+    showIpIntBrief:{
+      R1:['Loopback0              '+rid+'    YES manual up  up','Loopback1              '+net2+'   YES manual up  up','Loopback2              '+net3+'  YES manual up  up','Ethernet0/0            '+neigh1.replace(/\d+$/,'226')+'   YES manual up  up']
+    },
+    checks:[
+      {l:'router bgp '+localAs, ok:function(sc){return sc.bgpProc;}},
+      {l:'bgp router-id '+rid, ok:function(sc){return sc.bgpRid;}},
+      {l:'neighbor '+neigh1+' remote-as '+as2, ok:function(sc){return sc.bgpNeigh;}},
+      {l:'address-family ipv4', ok:function(sc){return sc.bgpAf;}},
+      {l:'network '+rid+' mask 255.255.255.255', ok:function(sc){return sc.bgpNet;}}
+    ],
+    solution:{
+      R1:['R1>enable','R1#configure terminal',
+          'R1(config)#router bgp '+localAs,
+          '###Run "show ip int brief" to verify Loopback0 is "'+rid+'"',
+          'R1(config-router)#bgp router-id '+rid,
+          'R1(config-router)#neighbor '+neigh1+' remote-as '+as2,
+          'R1(config-router)#neighbor '+neigh2+' remote-as '+as3,
+          'R1(config-router)#address-family ipv4',
+          'R1(config-router-af)#neighbor '+neigh1+' activate',
+          'R1(config-router-af)#neighbor '+neigh2+' activate',
+          '###Run "show ip int brief" to verify Loopback0,1,2 IPs',
+          'R1(config-router-af)#network '+rid+' mask 255.255.255.255',
+          'R1(config-router-af)#network '+net2+' mask 255.255.255.255',
+          'R1(config-router-af)#network '+net3+' mask 255.255.255.255',
+          'R1(config-router-af)#end','R1#write memory']
+    },
+    topo:{type:'bgp',localAs,as2,as3,rid}
+  };
+}
+
+/* ── 10. EIGRP ACL + CoPP ── */
+function makeQ_CoPP(){
+  var aclDev=rnd(['R2','R3']);
+  var coppDev=aclDev==='R2'?'R3':'R2';
+  var aclNum=rnd([120,150,151,160]);
+  var proto=rnd(['eigrp','ospf']);
+  var coppProto=rnd(['SSH','Telnet','ICMP']);
+  var coppNetBase=rnd(['192.168.210','192.168.211','192.168.24','192.168.201']);
+  var coppNet=coppNetBase+'.0';
+  var rate=rnd([8000,9000,10000]);
+  var cmapName=coppProto==='SSH'?'SSH':coppProto==='Telnet'?'TELNET':'ICMP';
+  return {
+    cat:'EIGRP+CoPP',subtype:'A',
+    devices:[aclDev,coppDev],
+    vars:{aclDev,coppDev,aclNum,proto,coppProto,coppNet,rate,cmapName},
+    taskIntro:'EIGRP is preconfigured on all routers. Configure '+aclDev+' and '+coppDev+' to complete these tasks.',
+    tasks:[
+      '<u>Task 1 ('+aclDev+')</u><br>Modify the existing ACL on '+aclDev+' so that '+proto.toUpperCase()+' routes are received from R1 and R3.<ul style="padding-left:18px;margin-top:4px;"><li>The modification should only allow '+proto.toUpperCase()+' routes to pass.</li><li>Do not remove any configuration from '+aclDev+' to achieve this task.</li></ul>',
+      '<u>Task 2 ('+coppDev+')</u><br>Configure CoPP on '+coppDev+' to achieve these results:<ul style="padding-left:18px;margin-top:4px;"><li>Permit '+coppProto+' traffic from '+h(coppNet+'/24')+'.</li><li>Limit traffic to '+h(rate+' bps')+'.</li><li>Discard additional packets.</li></ul>'
+    ],
+    showRun:{
+      [aclDev]:[
+        '!','hostname '+aclDev,'!',
+        'ip access-list extended '+aclNum,
+        ' 10 permit ip any any',
+        ' ! <-- Need to add: 5 permit '+proto+' any any',
+        '!','router eigrp 1',' network 0.0.0.0','!'],
+      [coppDev]:[
+        '!','hostname '+coppDev,'!',
+        'router eigrp 1',' network 0.0.0.0','!',
+        '! <-- CoPP not yet configured'
+      ]
+    },
+    showIpIntBrief:{
+      [aclDev]:['Ethernet0/0            192.168.213.2   YES manual up  up','Ethernet0/1            192.168.210.2   YES manual up  up'],
+      [coppDev]:['Ethernet0/0            192.168.213.3   YES manual up  up']
+    },
+    checks:[
+      {l:aclDev+' ACL '+aclNum+': 5 permit '+proto+' any any', ok:function(sc){return sc.aclDone;}},
+      {l:coppDev+' ip access-list extended '+cmapName, ok:function(sc){return sc.coppAcl;}},
+      {l:coppDev+' class-map match-any '+cmapName, ok:function(sc){return sc.cmapDone;}},
+      {l:coppDev+' policy-map COPP police '+rate, ok:function(sc){return sc.policeDone;}},
+      {l:coppDev+' service-policy input COPP', ok:function(sc){return sc.cpDone;}}
+    ],
+    solution:{
+      [aclDev]:[
+        aclDev+'>enable',aclDev+'#configure terminal',
+        '###Run "show access-lists" to verify ACL number is "'+aclNum+'"',
+        aclDev+'(config)#ip access-list extended '+aclNum,
+        aclDev+'(config-ext-nacl)#5 permit '+proto+' any any',
+        aclDev+'(config-ext-nacl)#end',aclDev+'#write memory'
+      ],
+      [coppDev]:[
+        coppDev+'>enable',coppDev+'#configure terminal',
+        coppDev+'(config)#ip access-list extended '+cmapName,
+        coppProto==='SSH'?coppDev+'(config-ext-nacl)#permit tcp '+coppNetBase+'.0 0.0.0.255 any eq 22':
+        coppProto==='Telnet'?coppDev+'(config-ext-nacl)#permit tcp '+coppNetBase+'.0 0.0.0.255 any eq telnet':
+        coppDev+'(config-ext-nacl)#permit icmp '+coppNetBase+'.0 0.0.0.255 any',
+        coppDev+'(config-ext-nacl)#exit',
+        coppDev+'(config)#class-map match-any '+cmapName,
+        coppDev+'(config-cmap)#match access-group name '+cmapName,
+        coppDev+'(config-cmap)#exit',
+        coppDev+'(config)#policy-map COPP',
+        coppDev+'(config-pmap)#class '+cmapName,
+        coppDev+'(config-pmap-c)#police '+rate+' conform-action transmit exceed-action drop',
+        coppDev+'(config-pmap-c)#control-plane',
+        coppDev+'(config-cp)#service-policy input COPP',
+        coppDev+'(config-cp)#end',coppDev+'#write memory'
+      ]
+    },
+    topo:{type:'copp',aclDev,coppDev}
+  };
+}
+
+function maskToPrefix(mask){var m={'255.255.128.0':17,'255.255.192.0':18,'255.255.224.0':19,'255.255.240.0':20,'255.255.248.0':21,'255.255.255.0':24};return m[mask]||'?';}
+
+// Build question pool
+function buildPool(){
+  QUESTIONS=[];
+  for(var i=0;i<4;i++) QUESTIONS.push(makeQ_NF_A());
+  for(var i=0;i<4;i++) QUESTIONS.push(makeQ_NF_B());
+  for(var i=0;i<4;i++) QUESTIONS.push(makeQ_NF_C());
+  for(var i=0;i<4;i++) QUESTIONS.push(makeQ_NF_D());
+  for(var i=0;i<4;i++) QUESTIONS.push(makeQ_OSPF_A());
+  for(var i=0;i<4;i++) QUESTIONS.push(makeQ_OSPF_B());
+  for(var i=0;i<4;i++) QUESTIONS.push(makeQ_VRF());
+  for(var i=0;i<4;i++) QUESTIONS.push(makeQ_EC());
+  for(var i=0;i<4;i++) QUESTIONS.push(makeQ_BGP());
+  for(var i=0;i<4;i++) QUESTIONS.push(makeQ_CoPP());
+  // shuffle
+  for(var i=QUESTIONS.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=QUESTIONS[i];QUESTIONS[i]=QUESTIONS[j];QUESTIONS[j]=t;}
+}
+
+// ══════════════════════════════════════════════════════════════
+// GLOBAL STATE
+// ══════════════════════════════════════════════════════════════
+var CQ=null, SC={}, qcount=0, qIdx=0;
+var curDev='', devStates={}, devHists={};
+var histIdx=0, acIdx=-1;
+
+function newQ(){
+  if(!QUESTIONS.length || qIdx>=QUESTIONS.length) { buildPool(); qIdx=0; }
+  CQ = QUESTIONS[qIdx++];
+  SC = initSC(CQ);
+  qcount++;
+
+  document.getElementById('catlabel').textContent=CQ.cat;
+  document.getElementById('typelabel').textContent=CQ.subtype;
+  document.getElementById('qnum').textContent='문제 #'+qcount;
+  document.getElementById('taskIntro').textContent=CQ.taskIntro||'';
+
+  var html=''; CQ.tasks.forEach(function(t){html+='<li style="margin-bottom:10px;">'+t+'</li>';});
+  document.getElementById('tasklist').innerHTML=html;
+  document.getElementById('bullets').innerHTML=CQ.bullets||'';
+
+  buildDevTabs();
+  buildTopo();
+  doReset();
+}
+
+function initSC(q){
+  var cat=q.cat;
+  if(cat==='NetFlow/SPAN/SLA') return {nfDone:false,nfIn:false,nfOut:false,slaDone:false,spanSrc:false,spanDst:false,icmpSet:false,freqSet:false,httpSet:false,httpFreqSet:false};
+  if(cat==='OSPF') return {ospfProc:false,ospfRid:false,ospfIface:false,ospfStub:false,ospfRange:false,ospfNet:false,ospfNetStub:false};
+  if(cat==='VRF+Tunnel') return {vrfIface:false,tunVrf:false,tunSrcDst:false,vrfRoute:false,tunSrc:false,tunDst:false};
+  if(cat==='EtherChannel+STP') return {noOldPo:false,lacp:false,poTrunk:false,stpRoot:false};
+  if(cat==='eBGP') return {bgpProc:false,bgpRid:false,bgpNeigh:false,bgpAf:false,bgpNet:false};
+  if(cat==='EIGRP+CoPP') return {aclDone:false,coppAcl:false,cmapDone:false,pmapDone:false,policeDone:false,cpDone:false};
+  return {};
+}
+
+// ══════════════════════════════════════════════════════════════
+// DEVICE TABS
+// ══════════════════════════════════════════════════════════════
+function buildDevTabs(){
+  var devs=CQ.devices;
+  curDev=devs[0];
+  devStates={}; devHists={};
+  devs.forEach(function(d){devStates[d]={mode:'user'};devHists[d]=[];});
+
+  var el=document.getElementById('devtabsEl'); el.innerHTML='';
+  devs.forEach(function(d){
+    var t=document.createElement('div');
+    t.className='dt'+(d===curDev?' on':'');
+    t.textContent=d; t.id='dt-'+d;
+    t.onclick=function(){switchDev(d);};
+    el.appendChild(t);
+  });
+  buildQuickBar();
+}
+
+function buildQuickBar(){
+  var qb=document.getElementById('quickbar'); qb.innerHTML='';
+  var cat=CQ.cat;
+  var btns=[];
+  if(cat==='NetFlow/SPAN/SLA') btns=['enable','configure terminal','show running-config','show ip interface brief','show flow monitor','flow exporter','transport udp','destination','ip sla','ip sla schedule','icmp-echo','frequency','http get','interface Ethernet0/0','ip flow monitor','monitor session','source interface','source vlan','destination interface','both','life forever start-time now','end','exit','write memory'];
+  else if(cat==='OSPF') btns=['enable','configure terminal','show running-config','show ip interface brief','show run int lo0','router ospf','router-id','area range','network','ip ospf','interface range','loopback0','Ethernet0/0-1','end','exit','write memory'];
+  else if(cat==='VRF+Tunnel') btns=['enable','configure terminal','show running-config','show ip interface brief','interface Ethernet0/1','interface Tunnel','ip vrf forwarding','ip address','tunnel source Ethernet0/0','tunnel destination','no shutdown','ip route vrf','end','exit','write memory'];
+  else if(cat==='EtherChannel+STP') btns=['enable','configure terminal','show running-config','no interface Port-channel','interface range','switchport trunk encapsulation dot1q','switchport mode trunk','channel-group','mode active','no shutdown','interface Port-channel','spanning-tree vlan','priority 0','end','exit','write memory'];
+  else if(cat==='eBGP') btns=['enable','configure terminal','show running-config','show ip interface brief','router bgp','bgp router-id','neighbor','remote-as','address-family ipv4','activate','network','mask 255.255.255.255','end','exit','write memory'];
+  else if(cat==='EIGRP+CoPP') btns=['enable','configure terminal','show running-config','show access-lists','ip access-list extended','5 permit eigrp any any','5 permit ospf any any','permit tcp','permit icmp','exit','class-map match-any','match access-group name','policy-map COPP','class','police','conform-action transmit exceed-action drop','control-plane','service-policy input COPP','end','write memory'];
+  btns.forEach(function(b){var btn=document.createElement('button');btn.className='qk';btn.textContent=b;btn.onclick=function(){appendInput(b);};qb.appendChild(btn);});
+}
+
+// ══════════════════════════════════════════════════════════════
+// TOPOLOGY SVG
+// ══════════════════════════════════════════════════════════════
+function buildTopo(){
+  var g=document.getElementById('topoG'); g.innerHTML='';
+  var ns='http://www.w3.org/2000/svg';
+  function el(tag,a,txt){var e=document.createElementNS(ns,tag);Object.keys(a).forEach(function(k){e.setAttribute(k,a[k]);});if(txt)e.textContent=txt;return e;}
+  function line(x1,y1,x2,y2,dash,color){return el('line',{x1:x1,y1:y1,x2:x2,y2:y2,stroke:color||'#8b949e','stroke-width':1.2,'stroke-dasharray':dash||'0'});}
+  function txt(x,y,t,c,fs){return el('text',{x:x,y:y,'font-size':fs||9,fill:c||'#8b949e','text-anchor':'middle'},t);}
+  function router(x,y,lbl,c){var g2=document.createElementNS(ns,'g');g2.appendChild(el('ellipse',{cx:x,cy:y,rx:24,ry:14,fill:c||'#2d7a3a'}));g2.appendChild(el('ellipse',{cx:x,cy:y,rx:16,ry:9,fill:'#1a5c24'}));g2.appendChild(txt(x,y+30,lbl,c||'#3fb950',11));return g2;}
+  function sw(x,y,lbl){var g2=document.createElementNS(ns,'g');g2.appendChild(el('rect',{x:x-32,y:y-18,width:64,height:36,rx:4,fill:'#4a6fa5'}));g2.appendChild(el('rect',{x:x-24,y:y-12,width:48,height:24,rx:2,fill:'#1a3a6b'}));g2.appendChild(txt(x,y+32,lbl,'#4a9eff',11));return g2;}
+  function pc(x,y,lbl){var g2=document.createElementNS(ns,'g');g2.appendChild(el('rect',{x:x-24,y:y-16,width:48,height:28,rx:3,fill:'#30363d'}));g2.appendChild(el('rect',{x:x-16,y:y-10,width:32,height:16,rx:2,fill:'#555'}));g2.appendChild(txt(x,y+24,lbl,'#8b949e',11));return g2;}
+  function table(tx,ty,rows){var rh=10,hw=160,hh=14;var g2=document.createElementNS(ns,'g');g2.appendChild(el('rect',{x:tx,y:ty,width:hw,height:hh+rows.length*rh+3,rx:3,fill:'#161b22',stroke:'#30363d','stroke-width':0.5}));var hdr=document.createElementNS(ns,'text');hdr.setAttribute('x',tx+4);hdr.setAttribute('y',ty+10);hdr.setAttribute('font-size','8');hdr.setAttribute('font-weight','600');hdr.setAttribute('fill','#8b949e');hdr.textContent='Device  Interface     IP';g2.appendChild(hdr);g2.appendChild(el('line',{x1:tx,y1:ty+hh,x2:tx+hw,y2:ty+hh,stroke:'#30363d','stroke-width':0.5}));rows.forEach(function(r,i){var t2=document.createElementNS(ns,'text');t2.setAttribute('x',tx+4);t2.setAttribute('y',ty+hh+rh*(i+1));t2.setAttribute('font-size','8');t2.setAttribute('fill',r[3]||'#c9d1d9');t2.textContent=(r[0]+'       ').slice(0,8)+(r[1]+'             ').slice(0,14)+r[2];g2.appendChild(t2);});return g2;}
+
+  var t=CQ.topo, v=CQ.vars;
+  if(t.type==='netflow'){
+    g.appendChild(line(106,88,316,36));g.appendChild(line(350,76,350,185,'4,2'));g.appendChild(line(316,54,162,176,'4,2'));
+    g.appendChild(sw(352,38,'Sw1'));g.appendChild(router(64,88,'R1'));
+    g.appendChild(pc(132,195,'PC1'));g.appendChild(pc(352,205,'PC2'));
+    g.appendChild(txt(195,50,'VLAN '+(v.vM||10),'#4a9eff'));g.appendChild(txt(368,138,'VLAN '+(v.vP2||14),'#8b949e'));g.appendChild(txt(228,128,'VLAN '+(v.vP1||12),'#8b949e'));
+    var rows=[['R1','e0/0',v.r1ip||'10.10.1.2'],['Sw1','VLAN '+(v.vM||10),v.swM||'10.10.1.1'],['Sw1','VLAN '+(v.vP1||12),v.swP1||'10.12.1.1'],['Sw1','VLAN '+(v.vP2||14),v.swP2||'10.14.1.1'],['PC1','VLAN '+(v.vP1||12),v.pc1||'10.12.1.2'],['PC2','VLAN '+(v.vP2||14),v.pc2||'10.14.1.2']];
+    if(v.sw1Loops&&v.sw1Loops[0]) rows.push(['Sw1',v.sw1Loops[0].if,v.sw1Loops[0].ip,'#3fb950']);
+    g.appendChild(table(170,190,rows));
+  } else if(t.type==='ospf'){
+    g.appendChild(el('circle',{cx:210,cy:120,r:88,fill:'none',stroke:'#4a9eff','stroke-width':1,'stroke-dasharray':'4,2'}));
+    g.appendChild(txt(210,68,'Area 0','#4a9eff',10));
+    g.appendChild(line(210,34,132,158));g.appendChild(line(210,34,288,158));g.appendChild(line(132,158,288,158));
+    g.appendChild(router(210,34,'R10','#666'));g.appendChild(router(132,158,'R20','#4a9eff'));g.appendChild(router(288,158,'R30','#666'));
+    g.appendChild(line(132,172,64,238,'4,2'));g.appendChild(line(288,172,356,238,'4,2'));
+    g.appendChild(router(64,248,'R40','#444'));g.appendChild(router(356,248,'R50','#444'));
+    g.appendChild(txt(80,215,'Area 40','#e3b341',9));g.appendChild(txt(340,215,'Area 50','#e3b341',9));
+    g.appendChild(txt(162,90,'10.10.20.0/24','#8b949e',8));g.appendChild(txt(258,90,'10.10.30.0/24','#8b949e',8));g.appendChild(txt(210,152,'10.20.30.0/24','#8b949e',8));
+    g.appendChild(txt(88,208,'10.'+t.stub+'.50.0/24','#8b949e',8));
+  } else if(t.type==='vrf'){
+    g.appendChild(router(210,48,'ISP','#666'));
+    g.appendChild(router(80,185,'R11'));g.appendChild(router(340,185,'R22'));
+    g.appendChild(line(200,62,92,172));g.appendChild(line(220,62,328,172));
+    g.appendChild(el('line',{x1:104,y1:185,x2:316,y2:185,stroke:'#4a9eff','stroke-width':1.5,'stroke-dasharray':'6,3'}));
+    g.appendChild(txt(210,178,'Tunnel '+(t.tunNum||0),'#4a9eff',9));
+    g.appendChild(sw(80,280,'Sw11'));g.appendChild(sw(340,280,'Sw22'));
+    g.appendChild(line(80,200,80,264));g.appendChild(line(340,200,340,264));
+    g.appendChild(txt(36,258,'VLAN 111\n10.10.111.1/24\nVRF '+t.vrf,'#3fb950',8));
+    g.appendChild(txt(380,258,'VLAN 222\n10.10.222.1/24\nVRF '+t.vrf,'#3fb950',8));
+  } else if(t.type==='etherchannel'){
+    g.appendChild(sw(210,55,'Sw10'));g.appendChild(sw(60,210,'Sw30'));g.appendChild(sw(210,275,'Sw20'));
+    g.appendChild(line(178,70,92,196));g.appendChild(line(183,72,97,198));
+    g.appendChild(line(210,73,210,260));g.appendChild(line(216,73,216,260));
+    g.appendChild(txt(172,158,'Po'+t.poNum,'#e3b341',9));
+    g.appendChild(txt(200,178,'('+CQ.vars.ifRange+')','#8b949e',8));
+  } else if(t.type==='bgp'){
+    g.appendChild(el('rect',{x:145,y:18,width:130,height:75,rx:6,fill:'none',stroke:'#4a9eff','stroke-width':1}));
+    g.appendChild(txt(210,34,'AS '+t.localAs,'#4a9eff',11));
+    g.appendChild(router(210,66,'R1'));
+    g.appendChild(el('rect',{x:18,y:200,width:110,height:65,rx:6,fill:'none',stroke:'#8b949e','stroke-width':1}));
+    g.appendChild(txt(73,216,'AS '+t.as3,'#8b949e',11));
+    g.appendChild(router(73,238,'R3','#666'));
+    g.appendChild(el('rect',{x:290,y:200,width:110,height:65,rx:6,fill:'none',stroke:'#8b949e','stroke-width':1}));
+    g.appendChild(txt(345,216,'AS '+t.as2,'#8b949e',11));
+    g.appendChild(router(345,238,'R2','#666'));
+    g.appendChild(line(188,80,95,224));g.appendChild(line(232,80,323,224));g.appendChild(line(128,238,290,238));
+    g.appendChild(txt(210,258,'209.165.200.x/30','#6e7681',8));
+  } else if(t.type==='copp'){
+    g.appendChild(router(210,50,'R10','#666'));g.appendChild(sw(210,165,'Sw20'));
+    g.appendChild(router(86,248,'R20'));g.appendChild(router(334,165,'R30','#666'));
+    g.appendChild(pc(334,275,'PC20'));
+    g.appendChild(line(210,64,210,146));g.appendChild(line(196,180,100,236));g.appendChild(line(224,180,334,180));g.appendChild(line(334,183,334,260));
+    g.appendChild(txt(148,220,'192.168.123.20/24','#8b949e',8));g.appendChild(txt(278,172,'192.168.123.30/24','#8b949e',8));
+    g.appendChild(txt(210,122,'192.168.123.10/24','#8b949e',8));
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// TERMINAL STATE MACHINE
+// ══════════════════════════════════════════════════════════════
+function getMode(){return devStates[curDev]?devStates[curDev].mode||'user':'user';}
+function setMode(m){if(devStates[curDev])devStates[curDev].mode=m;}
+function getDS(){return devStates[curDev]||{};}
+
+function getPrompt(){
+  var m=getMode(),b=curDev;
+  var map={'user':b+'>','exec':b+'#','config':b+'(config)#','config-router':b+'(config-router)#','config-if':b+'(config-if)#','config-if-range':b+'(config-if-range)#','config-flow-exporter':b+'(config-flow-exporter)#','config-ip-sla':b+'(config-ip-sla)#','config-ip-sla-http':b+'(config-ip-sla-http)#','config-router-af':b+'(config-router-af)#','config-ext-nacl':b+'(config-ext-nacl)#','config-cmap':b+'(config-cmap)#','config-pmap':b+'(config-pmap)#','config-pmap-c':b+'(config-pmap-c)#','config-cp':b+'(config-cp)#','conf-keyring':b+'(conf-keyring)#'};
+  return map[m]||b+'>';
+}
+function updPrompt(){document.getElementById('plbl').textContent=getPrompt();}
+
+function tprint(txt,cls){
+  var o=document.getElementById('tout');
+  var d=document.createElement('div');if(cls)d.className=cls;
+  d.textContent=txt;o.appendChild(d);o.scrollTop=o.scrollHeight;
+}
+function unk(c){tprint('% Invalid input detected at "^" marker','c-err');tprint('% '+c,'c-err');}
+function norm(c){return c.trim().replace(/\s+/g,' ');}
+
+function runCmd(raw){
+  var cmd=norm(raw);if(!cmd)return;
+  tprint(getPrompt()+' '+cmd,'c-prompt');
+  var m=getMode(),cl=cmd.toLowerCase();
+  // universal commands
+  if(cl==='enable'||cl==='en'){if(m==='user'){setMode('exec');return;} }
+  if(cl==='configure terminal'||cl==='conf t'){if(m==='exec'){setMode('config');tprint('Enter configuration commands, one per line.  End with CNTL/Z.','c-info');return;}}
+  if(cl==='end'||cl==='^z'){if(m!=='user'){setMode('exec');tprint('%SYS-5-CONFIG_I: Configured from console by console','c-info');}return;}
+  if(cl==='exit'){ var pm={exec:'user',config:'exec','config-router':'config','config-if':'config','config-if-range':'config','config-flow-exporter':'config','config-ip-sla':'config','config-ip-sla-http':'config-ip-sla','config-router-af':'config-router','config-ext-nacl':'config','config-cmap':'config','config-pmap':'config','config-pmap-c':'config-pmap','config-cp':'config','conf-keyring':'config'};setMode(pm[m]||'user');return;}
+  if(cl==='wr'||cl==='write memory'||cl==='copy running-config startup-config'){tprint('Building configuration...[OK]','c-ok');return;}
+  if(m==='user'){unk(cmd);return;}
+  if(m==='exec'&&cl.startsWith('show ')){doShow(cmd,cl);return;}
+  // dispatch by category
+  var cat=CQ.cat;
+  if(cat==='NetFlow/SPAN/SLA') procSLA(cmd,cl,m);
+  else if(cat==='OSPF') procOSPF(cmd,cl,m);
+  else if(cat==='VRF+Tunnel') procVRF(cmd,cl,m);
+  else if(cat==='EtherChannel+STP') procEC(cmd,cl,m);
+  else if(cat==='eBGP') procBGP(cmd,cl,m);
+  else if(cat==='EIGRP+CoPP') procCoPP(cmd,cl,m);
+  else unk(cmd);
+  updPrompt();
+}
+
+// ── show commands ──
+function doShow(cmd,cl){
+  var v=CQ.vars, cat=CQ.cat;
+  var showLines = (CQ.showRun&&CQ.showRun[curDev])||[];
+  var briefLines = (CQ.showIpIntBrief&&CQ.showIpIntBrief[curDev])||[];
+
+  if(cl.includes('running')||cl.includes('run')&&!cl.includes('int')){
+    tprint('Building configuration...','c-info');tprint('','');
+    tprint('Current configuration:','c-info');tprint('!','c-info');
+    showLines.forEach(function(l){
+      if(!l) return;
+      var cls='';
+      if(l.startsWith('!')) cls='c-info';
+      else if(l.includes('NOT YET')||l.includes('<--')) cls='c-err';
+      tprint(l,cls);
+    });
+    // add what user has configured so far (green)
+    if(cat==='NetFlow/SPAN/SLA'){
+      if(SC.nfDone&&v.udp) tprint(' transport udp '+v.udp+' (✓ configured)','c-ok');
+      if(SC.nfDone&&v.destIP) tprint(' destination '+v.destIP+' (✓ configured)','c-ok');
+      if(SC.nfIn) tprint('! ip flow monitor '+v.monName+' input ✓','c-ok');
+      if(SC.nfOut) tprint('! ip flow monitor '+v.monName+' output ✓','c-ok');
+      if(SC.slaDone) tprint('ip sla schedule '+v.slaOp+' life forever start-time now ✓','c-ok');
+      if(SC.spanSrc) tprint('monitor session '+v.sess+' source ... ✓','c-ok');
+      if(SC.spanDst) tprint('monitor session '+v.sess+' destination ... ✓','c-ok');
+    } else if(cat==='OSPF'){
+      if(SC.ospfProc) tprint('router ospf '+v.pid+' ✓','c-ok');
+      if(SC.ospfRid) tprint(' router-id '+v.loopIP+' ✓','c-ok');
+      if(SC.ospfRange) tprint(' area '+v.stub+' range '+v.summNet+' '+v.summMask+' ✓','c-ok');
+      if(SC.ospfIface) tprint(' ip ospf '+v.pid+' area 0 (on interfaces) ✓','c-ok');
+      if(SC.ospfStub) tprint(' ip ospf '+v.pid+' area '+v.stub+' (Eth0/2) ✓','c-ok');
+    } else if(cat==='eBGP'){
+      if(SC.bgpProc) tprint('router bgp '+v.localAs+' ✓','c-ok');
+      if(SC.bgpRid) tprint(' bgp router-id '+v.rid+' ✓','c-ok');
+      if(SC.bgpNeigh) tprint(' neighbor '+v.neigh1+' remote-as '+v.as2+' ✓','c-ok');
+      if(SC.bgpNet) tprint(' network statements ✓','c-ok');
+    } else if(cat==='EtherChannel+STP'){
+      if(SC.noOldPo) tprint('! Port-channel'+v.oldPo+' removed ✓','c-ok');
+      if(SC.lacp) tprint('! channel-group '+v.poNum+' mode active ✓','c-ok');
+      if(SC.stpRoot) tprint('spanning-tree vlan '+v.vlans+' priority 0 ✓','c-ok');
+    }
+    tprint('end','c-info');
+    return;
+  }
+  if(cl.includes('ip int brief')||cl.includes('ip interface brief')){
+    tprint('Interface              IP-Address      OK? Method Status   Protocol','c-info');
+    briefLines.forEach(function(l){tprint(l,'');});
+    return;
+  }
+  if(cl.includes('run int lo')){
+    var loNum=cl.match(/lo(\d*)/);var loN=loNum?loNum[1]||'0':'0';
+    tprint('interface Loopback'+loN,'c-info');
+    if(cat==='OSPF') tprint(' ip address '+v.loopIP+' 255.255.255.255','c-ok');
+    else if(cat==='eBGP'&&loN==='0') tprint(' ip address '+v.rid+' 255.255.255.255','c-ok');
+    return;
+  }
+  if(cl.includes('sec sla')){
+    tprint('ip sla '+v.slaOp,'c-ok');
+    if(SC.slaDone) tprint('ip sla schedule '+v.slaOp+' life forever start-time now','c-ok');
+    return;
+  }
+  if(cl.includes('flow monitor')||cl.includes('flow exporter')){
+    if(v.monName) tprint('Flow Monitor '+v.monName+':','c-info');
+    if(v.expName) tprint('Flow Exporter '+v.expName+':','c-info');
+    if(SC.nfDone) tprint('  Status: Active','c-ok');
+    else tprint('  Status: Not fully configured','c-err');
+    return;
+  }
+  if(cl.includes('monitor session')){
+    tprint('Session '+(v.sess||'?'),'c-info');
+    tprint('Type              : Local Session','');
+    if(SC.spanSrc) tprint('Source Ports      : Both: '+(v.srcIf||v.srcIf+','+v.srcIf2||'vlan '+v.vlan),'c-ok');
+    else tprint('Source Ports      : None','');
+    if(SC.spanDst) tprint('Destination Ports : '+v.dstIf,'c-ok');
+    else tprint('Destination Ports : None','');
+    return;
+  }
+  if(cl.includes('access-lists')||cl.includes('access-list')){
+    tprint('Extended IP access list '+(v.aclNum||'?'),'c-info');
+    tprint('  10 permit ip any any','');
+    if(SC.aclDone) tprint('   5 permit '+v.proto+' any any ✓','c-ok');
+    return;
+  }
+  if(cl.includes('ospf')){
+    tprint('Routing Process "ospf '+(v.pid||'?')+'" with ID '+(v.loopIP||'unset'),'c-info');
+    if(SC.ospfRid) tprint('  Router-ID: '+v.loopIP,'c-ok');
+    return;
+  }
+  if(cl.includes('bgp')){
+    tprint('BGP router identifier '+(SC.bgpRid?v.rid:'not set')+', local AS number '+(v.localAs||'?'),'c-info');
+    return;
+  }
+  tprint('% Invalid input or not supported in simulation','c-err');
+}
+
+// ── NetFlow/SPAN/SLA processor ──
+function procSLA(cmd,cl,m){
+  var v=CQ.vars, sub=CQ.subtype;
+  if(m==='config'){
+    if((sub==='A'||sub==='B')&&cl==='flow exporter '+v.expName.toLowerCase()){setMode('config-flow-exporter');return;}
+    if((sub==='A'||sub==='B')&&cl.startsWith('flow exporter ')){tprint('% Wrong exporter name — run "show run" to verify','c-err');return;}
+    if(cl==='ip sla '+v.slaOp){setMode('config-ip-sla');return;}
+    if(/^ip sla \d+$/.test(cl)){tprint('% Wrong SLA op number — run "show run | sec sla"','c-err');return;}
+    if(cl.startsWith('ip sla schedule ')){
+      if(cl.includes(' '+v.slaOp+' ')&&cl.includes('life forever')&&cl.includes('start-time now')){SC.slaDone=true;tprint('');}
+      else if(!cl.includes(' '+v.slaOp)) tprint('% Wrong SLA op number','c-err');
+      else tprint('% Syntax: ip sla schedule <op> life forever start-time now','c-err');
+      return;
+    }
+    if((sub==='C'||sub==='D')&&(cl==='interface ethernet0/0'||cl==='int e0/0'||cl==='int ethernet0/0')){setMode('config-if');return;}
+    unk(cmd); return;
+  }
+  if(m==='config-flow-exporter'){
+    if(sub==='A'&&cl.startsWith('transport udp ')){
+      var p=parseInt(cl.split(' ')[2]);
+      if(p===v.udp){SC.nfDone=true;tprint('');}else tprint('% Wrong UDP port — task requires '+v.udp,'c-err');
+      return;
+    }
+    if(sub==='B'&&cl.startsWith('destination ')){
+      var ip=cl.split(' ')[1];
+      if(ip===v.destIP){SC.nfDone=true;tprint('');}else tprint('% Wrong IP — task requires '+v.destIP,'c-err');
+      return;
+    }
+    unk(cmd); return;
+  }
+  if(m==='config-ip-sla'){
+    if(sub==='B'&&cl.startsWith('http get ')){
+      var url=cmd.substring(9);
+      if(url==='http://'+v.destIP){SC.httpSet=true;setMode('config-ip-sla-http');tprint('');}
+      else tprint('% Wrong URL — task requires http://'+v.destIP,'c-err');
+      return;
+    }
+    if((sub==='C'||sub==='D')&&cl.startsWith('icmp-echo ')){
+      var tgt=sub==='C'?v.loopIP:v.pc1;
+      var ip2=cmd.split(' ')[1];
+      if(ip2===tgt){SC.icmpSet=true;tprint('');}else tprint('% Wrong target IP — run "show ip int brief" on Sw1 / check topology','c-err');
+      return;
+    }
+    if(cl.startsWith('frequency ')){
+      var f=parseInt(cl.split(' ')[1]);
+      if(f===v.freq){SC.freqSet=true;if(SC.icmpSet)SC.slaDone=true;tprint('');}
+      else tprint('% Wrong frequency — task requires '+v.freq,'c-err');
+      return;
+    }
+    unk(cmd); return;
+  }
+  if(m==='config-ip-sla-http'){
+    if(cl.startsWith('frequency ')){
+      var f2=parseInt(cl.split(' ')[1]);
+      if(f2===v.freq){SC.httpFreqSet=true;SC.slaDone=true;tprint('');}else tprint('% Wrong frequency','c-err');
+      return;
+    }
+    unk(cmd); return;
+  }
+  if(m==='config-if'){
+    if(cl==='ip flow monitor '+v.monName.toLowerCase()+' input'){SC.nfIn=true;if(SC.nfOut)SC.nfDone=true;tprint('');return;}
+    if(cl==='ip flow monitor '+v.monName.toLowerCase()+' output'){SC.nfOut=true;if(SC.nfIn)SC.nfDone=true;tprint('');return;}
+    if(cl.startsWith('ip flow monitor ')&&!cl.includes(v.monName.toLowerCase())){tprint('% Wrong monitor name — run "show flow monitor"','c-err');return;}
+    unk(cmd); return;
+  }
+  // Sw1
+  if(m==='config'){
+    var sm=cmd.match(/monitor session (\d+) source (vlan (\d+)|interface (\S+)) (both|rx|tx)/i);
+    var dm=cmd.match(/monitor session (\d+) destination interface (\S+)/i);
+    if(sm){
+      var sessOk=parseInt(sm[1])===v.sess, dirOk=sm[5].toLowerCase()==='both', ifOk=false;
+      if(sub==='B'){var pts=sm[4]?sm[4].split(','):[];ifOk=pts.some(function(p){return p.toLowerCase()===v.srcIf.toLowerCase();})&&pts.some(function(p){return p.toLowerCase()===v.srcIf2.toLowerCase();});}
+      else if(sm[3]) ifOk=parseInt(sm[3])===v.vlan;
+      else if(sm[4]) ifOk=sm[4].toLowerCase()===v.srcIf.toLowerCase();
+      if(sessOk&&ifOk&&dirOk){SC.spanSrc=true;tprint('');}
+      else if(!sessOk) tprint('% Wrong session number — task requires '+v.sess,'c-err');
+      else if(!ifOk) tprint('% Wrong source interface/vlan — check the task','c-err');
+      else tprint('% Direction must be "both"','c-err');
+      return;
+    }
+    if(dm){
+      var sOk=parseInt(dm[1])===v.sess, iOk=dm[2].toLowerCase()===v.dstIf.toLowerCase();
+      if(sOk&&iOk){SC.spanDst=true;tprint('');}
+      else if(!sOk) tprint('% Wrong session — task requires '+v.sess,'c-err');
+      else tprint('% Wrong destination — task requires '+v.dstIf,'c-err');
+      return;
+    }
+    unk(cmd);
+  }
+}
+
+// ── OSPF processor ──
+function procOSPF(cmd,cl,m){
+  var v=CQ.vars;
+  if(m==='config'){
+    if(cl==='router ospf '+v.pid){SC.ospfProc=true;setMode('config-router');return;}
+    if(/^router ospf \d+$/.test(cl)){tprint('% Wrong process ID — task requires '+v.pid,'c-err');return;}
+    if(cl.startsWith('interface range ')||cl.startsWith('int range ')){devStates[curDev].inRange=true;setMode('config-if-range');return;}
+    if(cl.startsWith('interface ')||cl.startsWith('int ')){devStates[curDev].inRange=false;var ifn=cl.replace(/^int(erface)?\s+/,'');devStates[curDev].lastIf=ifn;setMode('config-if');return;}
+    unk(cmd); return;
+  }
+  if(m==='config-router'){
+    if(cl.startsWith('router-id ')){
+      if(cmd.split(' ')[1]===v.loopIP){SC.ospfRid=true;tprint('');}else tprint('% Wrong router-id — run "show run int lo0" to verify','c-err');
+      return;
+    }
+    if(cl.startsWith('area ')&&cl.includes('range ')){
+      if(cl.includes('area '+v.stub)&&cl.includes(v.summNet)){SC.ospfRange=true;tprint('');}
+      else if(!cl.includes('area '+v.stub)) tprint('% Wrong area — task requires area '+v.stub,'c-err');
+      else tprint('% Wrong network — check the summary range','c-err');
+      return;
+    }
+    if(cl.startsWith('network ')){
+      var parts=cl.split(' '); var area=parts[parts.length-1];
+      if(area==='0'){SC.ospfNet=true;tprint('');}
+      else{SC.ospfNetStub=true;tprint('');}
+      return;
+    }
+    unk(cmd); return;
+  }
+  if(m==='config-if'||m==='config-if-range'){
+    if(cl.startsWith('ip ospf '+v.pid+' area ')){
+      var areaN=cl.split('area ')[1].trim();
+      if(areaN==='0'){SC.ospfIface=true;tprint('');}
+      else if(areaN===String(v.stub)){SC.ospfStub=true;tprint('');}
+      else tprint('% Wrong area number','c-err');
+      return;
+    }
+    if(cl.startsWith('ip ospf ')&&!cl.startsWith('ip ospf '+v.pid)){tprint('% Wrong OSPF process ID — task requires '+v.pid,'c-err');return;}
+    if(cl.startsWith('interface ')||cl.startsWith('int ')){var ifn2=cl.replace(/^int(erface)?\s+/,'');devStates[curDev].lastIf=ifn2;setMode('config-if');return;}
+    unk(cmd); return;
+  }
+  unk(cmd);
+}
+
+// ── VRF+Tunnel processor ──
+function procVRF(cmd,cl,m){
+  var v=CQ.vars;
+  if(m==='config'){
+    if(cl.startsWith('interface ')||cl.startsWith('int ')){
+      var ifn=cl.replace(/^int(erface)?\s+/,'').trim();
+      devStates[curDev].curIf=ifn; setMode('config-if'); return;
+    }
+    if(cl.startsWith('ip route vrf ')){
+      if(cl.includes(v.vrf.toLowerCase())){SC.vrfRoute=true;tprint('');}else tprint('% Wrong VRF name','c-err');
+      return;
+    }
+    unk(cmd); return;
+  }
+  if(m==='config-if'){
+    if(cl.startsWith('ip vrf forwarding ')){
+      var vn=cmd.split(' ')[3];
+      if(vn.toLowerCase()===v.vrf.toLowerCase()){
+        if((devStates[curDev].curIf||'').startsWith('tunnel')) SC.tunVrf=true;
+        else SC.vrfIface=true;
+        tprint('% Interface not in VRF before. All addresses removed.','c-err');tprint('');
+      } else tprint('% Wrong VRF name — task requires '+v.vrf,'c-err');
+      return;
+    }
+    if(cl.startsWith('ip address ')){tprint('');return;}
+    if(cl==='no shutdown'){tprint('%LINK-3-UPDOWN: changed state to up','c-ok');return;}
+    if(cl.startsWith('tunnel source ')){devStates[curDev].tunSrc=true;if(devStates[curDev].tunDst)SC.tunSrcDst=true;tprint('');return;}
+    if(cl.startsWith('tunnel destination ')){devStates[curDev].tunDst=true;if(devStates[curDev].tunSrc)SC.tunSrcDst=true;tprint('');return;}
+    if(cl.startsWith('tunnel vrf ')){tprint('');return;}
+    if(cl.startsWith('tunnel mode ')){tprint('');return;}
+    unk(cmd); return;
+  }
+  unk(cmd);
+}
+
+// ── EtherChannel+STP processor ──
+function procEC(cmd,cl,m){
+  var v=CQ.vars;
+  if(m==='config'){
+    if(cl.startsWith('no interface port-channel')){SC.noOldPo=true;tprint('');return;}
+    if(cl.startsWith('interface range ')||cl.startsWith('int range ')){setMode('config-if-range');return;}
+    if(cl.startsWith('interface port-channel')||cl.startsWith('int port-channel')){setMode('config-if');return;}
+    if(cl.startsWith('spanning-tree vlan ')&&cl.includes('priority 0')){SC.stpRoot=true;tprint('');return;}
+    if(cl.startsWith('spanning-tree vlan ')&&!cl.includes('priority 0')){tprint('% Must use priority 0 to ensure root','c-err');return;}
+    unk(cmd); return;
+  }
+  if(m==='config-if-range'){
+    if(cl==='switchport trunk encapsulation dot1q'){tprint('');return;}
+    if(cl==='switchport mode trunk'){tprint('');return;}
+    if(cl.startsWith('channel-group ')&&cl.includes('mode active')){SC.lacp=true;tprint('');return;}
+    if(cl.startsWith('channel-group ')&&cl.includes('mode on')){tprint('% mode "on" does not negotiate LACP — use "mode active"','c-err');return;}
+    if(cl==='no shutdown'){tprint('');return;}
+    unk(cmd); return;
+  }
+  if(m==='config-if'){
+    if(cl==='switchport trunk encapsulation dot1q'){tprint('');return;}
+    if(cl==='switchport mode trunk'){SC.poTrunk=true;tprint('');return;}
+    if(cl==='no shutdown'){tprint('');return;}
+    unk(cmd); return;
+  }
+  unk(cmd);
+}
+
+// ── eBGP processor ──
+function procBGP(cmd,cl,m){
+  var v=CQ.vars;
+  if(m==='config'){
+    if(cl==='router bgp '+v.localAs){SC.bgpProc=true;setMode('config-router');return;}
+    if(/^router bgp \d+$/.test(cl)){tprint('% Wrong AS number — task requires AS '+v.localAs,'c-err');return;}
+    unk(cmd); return;
+  }
+  if(m==='config-router'){
+    if(cl.startsWith('bgp router-id ')){
+      if(cmd.split(' ')[2]===v.rid){SC.bgpRid=true;tprint('');}else tprint('% Wrong router-id — run "show ip int brief" to verify Loopback0','c-err');
+      return;
+    }
+    if(cl.startsWith('neighbor ')&&cl.includes('remote-as')){SC.bgpNeigh=true;tprint('');return;}
+    if(cl==='address-family ipv4'){SC.bgpAf=true;setMode('config-router-af');return;}
+    unk(cmd); return;
+  }
+  if(m==='config-router-af'){
+    if(cl.startsWith('neighbor ')&&cl.endsWith('activate')){tprint('');return;}
+    if(cl.startsWith('network ')){SC.bgpNet=true;tprint('');return;}
+    unk(cmd); return;
+  }
+  unk(cmd);
+}
+
+// ── EIGRP+CoPP processor ──
+function procCoPP(cmd,cl,m){
+  var v=CQ.vars;
+  if(m==='config'){
+    if(cl.startsWith('ip access-list extended ')){setMode('config-ext-nacl');return;}
+    if(cl.startsWith('class-map match-any ')){SC.cmapDone=true;setMode('config-cmap');return;}
+    if(cl.toLowerCase()==='policy-map copp'){SC.pmapDone=true;setMode('config-pmap');return;}
+    unk(cmd); return;
+  }
+  if(m==='config-ext-nacl'){
+    if(cl.includes('permit '+v.proto+' any any')||cl.includes('permit eigrp any any')||cl.includes('permit ospf any any')){
+      if(curDev===v.aclDev) SC.aclDone=true;
+      else SC.coppAcl=true;
+      tprint(''); return;
+    }
+    if(cl.startsWith('permit tcp ')||cl.startsWith('permit icmp ')||cl.startsWith('permit udp ')){
+      SC.coppAcl=true; tprint(''); return;
+    }
+    unk(cmd); return;
+  }
+  if(m==='config-cmap'){
+    if(cl.startsWith('match access-group name ')){tprint('');return;}
+    unk(cmd); return;
+  }
+  if(m==='config-pmap'){
+    if(cl.startsWith('class ')){setMode('config-pmap-c');return;}
+    unk(cmd); return;
+  }
+  if(m==='config-pmap-c'){
+    if(cl.startsWith('police ')){
+      if(cl.includes(String(v.rate))){SC.policeDone=true;tprint('');}else tprint('% Wrong rate — task requires '+v.rate+' bps','c-err');
+      return;
+    }
+    if(cl==='control-plane'){setMode('config-cp');return;}
+    unk(cmd); return;
+  }
+  if(m==='config-cp'){
+    if(cl==='service-policy input copp'){SC.cpDone=true;tprint('');return;}
+    unk(cmd); return;
+  }
+  unk(cmd);
+}
+
+// ══════════════════════════════════════════════════════════════
+// TAB AUTOCOMPLETE
+// ══════════════════════════════════════════════════════════════
+var TREES={};
+function getTree(){
+  var cat=CQ.cat, m=getMode();
+  var base=[{c:'configure terminal',d:'전역 설정'},{c:'show running-config',d:'설정 확인'},{c:'show ip interface brief',d:'인터페이스 확인'},{c:'write memory',d:'저장'},{c:'wr',d:'저장'},{c:'end',d:'user mode'}];
+  if(cat==='NetFlow/SPAN/SLA'){
+    var tr={user:[{c:'enable',d:''}],exec:[...base,{c:'show flow monitor',d:''},{c:'show run | sec sla',d:''},{c:'show monitor session',d:''}],config:[{c:'flow exporter',d:'이름은 show run 확인'},{c:'ip sla',d:'ip sla <op>'},{c:'ip sla schedule',d:'life forever start-time now'},{c:'interface Ethernet0/0',d:''},{c:'end',d:''},{c:'exit',d:''}],'config-flow-exporter':[{c:'transport udp',d:'<port>'},{c:'destination',d:'<ip>'},{c:'exit',d:''},{c:'end',d:''}],'config-ip-sla':[{c:'icmp-echo',d:'<target-ip>'},{c:'http get',d:'http get <url>'},{c:'frequency',d:'<seconds>'},{c:'exit',d:''},{c:'end',d:''}],'config-ip-sla-http':[{c:'frequency',d:'<seconds>'},{c:'exit',d:''},{c:'end',d:''}],'config-if':[{c:'ip flow monitor',d:'<name> input'},{c:'exit',d:''},{c:'end',d:''}]};
+    if(curDev==='Sw1') tr['config']=[{c:'monitor session',d:'<sess> source interface <if> both'},{c:'end',d:''},{c:'exit',d:''}];
+    return tr[m]||[];
+  }
+  if(cat==='OSPF'){var tr={user:[{c:'enable',d:''}],exec:[...base,{c:'show run int lo0',d:'Loopback0 IP 확인'},{c:'show run | sec sla',d:''}],config:[{c:'router ospf',d:'<pid>'},{c:'interface range',d:'...'},{c:'interface',d:'...'},{c:'end',d:''},{c:'exit',d:''}],'config-router':[{c:'router-id',d:'<ip>'},{c:'area',d:'area <n> range <net> <mask>'},{c:'network',d:'<net> <wildcard> area <n>'},{c:'exit',d:''},{c:'end',d:''}],'config-if':[{c:'ip ospf',d:'<pid> area <n>'},{c:'interface',d:'...'},{c:'exit',d:''},{c:'end',d:''}],'config-if-range':[{c:'ip ospf',d:'<pid> area <n>'},{c:'interface',d:'...'},{c:'exit',d:''},{c:'end',d:''}]};return tr[m]||[];}
+  if(cat==='VRF+Tunnel'){var tr={user:[{c:'enable',d:''}],exec:[...base],config:[{c:'interface Ethernet0/1',d:''},{c:'interface Tunnel',d:'<n>'},{c:'ip route vrf',d:'<vrf> <net> <mask> <nh>'},{c:'end',d:''},{c:'exit',d:''}],'config-if':[{c:'ip vrf forwarding',d:'<vrf-name>'},{c:'ip address',d:'<ip> <mask>'},{c:'no shutdown',d:''},{c:'tunnel source',d:'Ethernet0/0'},{c:'tunnel destination',d:'<ip>'},{c:'exit',d:''},{c:'end',d:''}]};return tr[m]||[];}
+  if(cat==='EtherChannel+STP'){var tr={user:[{c:'enable',d:''}],exec:[...base],config:[{c:'no interface Port-channel',d:'<n>'},{c:'interface range',d:'<range>'},{c:'interface Port-channel',d:'<n>'},{c:'spanning-tree vlan',d:'<vlans> priority 0'},{c:'end',d:''},{c:'exit',d:''}],'config-if-range':[{c:'switchport trunk encapsulation dot1q',d:''},{c:'switchport mode trunk',d:''},{c:'channel-group',d:'<n> mode active'},{c:'no shutdown',d:''},{c:'exit',d:''}],'config-if':[{c:'switchport trunk encapsulation dot1q',d:''},{c:'switchport mode trunk',d:''},{c:'no shutdown',d:''},{c:'exit',d:''}]};return tr[m]||[];}
+  if(cat==='eBGP'){var tr={user:[{c:'enable',d:''}],exec:[...base],config:[{c:'router bgp',d:'<as>'},{c:'end',d:''},{c:'exit',d:''}],'config-router':[{c:'bgp router-id',d:'<ip>'},{c:'neighbor',d:'<ip> remote-as <as>'},{c:'address-family ipv4',d:''},{c:'exit',d:''},{c:'end',d:''}],'config-router-af':[{c:'neighbor',d:'<ip> activate'},{c:'network',d:'<ip> mask 255.255.255.255'},{c:'end',d:''}]};return tr[m]||[];}
+  if(cat==='EIGRP+CoPP'){var tr={user:[{c:'enable',d:''}],exec:[...base,{c:'show access-lists',d:'ACL 번호 확인'}],config:[{c:'ip access-list extended',d:'<num>'},{c:'class-map match-any',d:'<name>'},{c:'policy-map COPP',d:''},{c:'end',d:''},{c:'exit',d:''}],'config-ext-nacl':[{c:'5 permit eigrp any any',d:''},{c:'5 permit ospf any any',d:''},{c:'permit tcp',d:'<net> <wild> any eq 22'},{c:'permit icmp',d:'<net> <wild> any'},{c:'end',d:''}],'config-cmap':[{c:'match access-group name',d:'<acl-name>'},{c:'exit',d:''}],'config-pmap':[{c:'class',d:'<name>'},{c:'exit',d:''}],'config-pmap-c':[{c:'police',d:'<bps> conform-action transmit exceed-action drop'},{c:'control-plane',d:''},{c:'exit',d:''}],'config-cp':[{c:'service-policy input COPP',d:''},{c:'end',d:''}]};return tr[m]||[];}
+  return [];
+}
+
+function getAC(partial){var p=partial.trim().toLowerCase();var list=getTree();if(!p)return list;return list.filter(function(i){return i.c.toLowerCase().startsWith(p);});}
+function cpfx(s){if(!s.length)return '';var p=s[0];for(var i=1;i<s.length;i++){while(s[i].indexOf(p)!==0){p=p.slice(0,-1);if(!p)return '';}}return p;}
+function renderAC(m){var box=document.getElementById('acbox');if(!m.length){box.style.display='none';acIdx=-1;return;}box.innerHTML='';m.forEach(function(x,i){var d=document.createElement('div');d.className='aci'+(i===acIdx?' sel':'');d.innerHTML='<span class="acmd">'+x.c+'</span><span class="adsc">'+x.d+'</span>';d.onmousedown=function(e){e.preventDefault();document.getElementById('cin').value=x.c+' ';hideAC();document.getElementById('cin').focus();};box.appendChild(d);});box.style.display='block';}
+function hideAC(){document.getElementById('acbox').style.display='none';acIdx=-1;}
+function appendInput(t){var cin=document.getElementById('cin');cin.value=t+' ';cin.focus();renderAC(getAC(cin.value));}
+
+function submitCmd(){
+  var cin=document.getElementById('cin');var v=cin.value;
+  var acVisible=document.getElementById('acbox').style.display!=='none';
+  var matches=getAC(v);
+  if(acVisible&&acIdx>=0&&matches[acIdx]){cin.value=matches[acIdx].c+' ';hideAC();return;}
+  if(v.trim()){if(!devHists[curDev])devHists[curDev]=[];devHists[curDev].unshift(v);}
+  histIdx=0;hideAC();
+  if(window.innerWidth<900) showTopTab('terminal');
+  runCmd(v);cin.value='';updPrompt();cin.focus();
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  var cin=document.getElementById('cin');
+  cin.addEventListener('input',function(){acIdx=-1;var v=this.value;if(!v.trim()){hideAC();return;}renderAC(getAC(v));});
+  cin.addEventListener('keydown',function(e){
+    var inp=this,acV=document.getElementById('acbox').style.display!=='none',matches=getAC(inp.value);
+    if(e.key==='Tab'){
+      e.preventDefault();
+      if(!inp.value.trim()){var all=getTree();if(all.length){tprint('');all.forEach(function(x){tprint('  '+pad(x.c,48)+x.d,'c-hint');});tprint('');}return;}
+      if(matches.length===1){inp.value=matches[0].c+' ';hideAC();}
+      else if(matches.length>1){var pfx=cpfx(matches.map(function(m){return m.c;}));if(pfx.length>inp.value.length)inp.value=pfx;renderAC(matches);if(matches.length<=8){tprint('');matches.forEach(function(x){tprint('  '+pad(x.c,48)+x.d,'c-hint');});tprint('');}}
+      else tprint('% Unrecognized command','c-err');
+    } else if(e.key==='ArrowUp'){e.preventDefault();if(acV&&matches.length){acIdx=Math.max(0,acIdx-1);renderAC(matches);}else{var h=devHists[curDev]||[];if(histIdx<h.length){inp.value=h[histIdx];histIdx++;}}}
+    else if(e.key==='ArrowDown'){if(acV&&matches.length){acIdx=Math.min(matches.length-1,acIdx+1);renderAC(matches);}else{histIdx=Math.max(0,histIdx-1);inp.value=(devHists[curDev]||[])[histIdx-1]||'';}}
+    else if(e.key==='Enter'){e.preventDefault();submitCmd();}
+    else if(e.key==='Escape')hideAC();
+  });
+  cin.addEventListener('keyup',function(e){if(e.key==='Enter'||e.keyCode===13){e.preventDefault();submitCmd();}});
+  document.getElementById('runbtn').addEventListener('click',submitCmd);
+  document.getElementById('newQBtn').addEventListener('click',newQ);
+  document.getElementById('lockBtn').addEventListener('click',unlock);
+  document.getElementById('lockInput').addEventListener('keyup',function(e){if(e.key==='Enter'||e.keyCode===13)unlock();});
+});
+
+// ══════════════════════════════════════════════════════════════
+// CHECK / SOLUTION / RESET / TABS
+// ══════════════════════════════════════════════════════════════
+function doCheck(){
+  var area=document.getElementById('sarea');area.innerHTML='';
+  var checks=CQ.checks;var all=true;
+  checks.forEach(function(c){
+    var ok=c.ok(SC);if(!ok)all=false;
+    var b=document.createElement('span');b.className=ok?'bok':'berr';
+    b.textContent=(ok?'✓ ':'✗ ')+c.l;area.appendChild(b);
+  });
+  if(all){var w=document.createElement('span');w.style.cssText='color:#3fb950;font-weight:700;font-size:12px;margin-left:4px;';w.textContent='완벽합니다! 🎉';area.appendChild(w);}
+}
+
+function doSolution(){
+  var sols=CQ.solution;
+  var devs=Object.keys(sols);
+  var show=devs.indexOf(curDev)>=0?curDev:devs[0];
+  tprint('─── 모범답안 ('+show+') ───','c-info');
+  (sols[show]||[]).forEach(function(l){
+    if(l.startsWith('###')) tprint(l,'c-hint');
+    else tprint('  '+l,'c-ok');
+  });
+  tprint('────────────────','c-info');
+}
+
+function doReset(){
+  CQ.devices.forEach(function(d){devStates[d]={mode:'user'};devHists[d]=[];});
+  SC=initSC(CQ);
+  document.getElementById('tout').innerHTML='';
+  document.getElementById('cin').value='';
+  document.getElementById('sarea').innerHTML='';
+  hideAC();histIdx=0;acIdx=-1;
+  curDev=CQ.devices[0];
+  document.querySelectorAll('.dt').forEach(function(t){t.classList.remove('on');});
+  var el=document.getElementById('dt-'+curDev);if(el)el.classList.add('on');
+  updPrompt();
+  tprint('Cisco IOS Software Simulation','c-info');
+  tprint('Category: '+CQ.cat+' | '+CQ.subtype,'c-info');
+  tprint('TIP: "show running-config" 로 pre-configured 항목 확인 후 작업하세요.','c-hint');
+  tprint('Tab=자동완성  ↑↓=히스토리  ▶버튼=실행','c-hint');
+  tprint('','');
+}
+
+function switchDev(name){
+  curDev=name;histIdx=0;acIdx=-1;
+  document.querySelectorAll('.dt').forEach(function(t){t.classList.remove('on');});
+  var el=document.getElementById('dt-'+name);if(el)el.classList.add('on');
+  document.getElementById('tout').innerHTML='';
+  document.getElementById('cin').value='';
+  hideAC();updPrompt();
+  tprint('--- Switched to '+name+' ---','c-info');
+  if(window.innerWidth<900) showTopTab('terminal');
+}
+
+function showTopTab(id){
+  if(window.innerWidth>=900){showLeftTab(id==='terminal'?'tasks':id);return;}
+  document.querySelectorAll('.topbar-tab').forEach(function(t){t.classList.remove('on');});
+  var tt=document.getElementById('ttab-'+id);if(tt)tt.classList.add('on');
+  document.querySelectorAll('.lsection').forEach(function(s){s.classList.remove('on');});
+  var ts=document.getElementById('termSection'),dv=document.getElementById('devtabsEl'),bw=document.querySelector('.brow'),sa=document.getElementById('sarea'),qb=document.getElementById('quickbar');
+  if(id==='tasks'){document.getElementById('ls-tasks').classList.add('on');ts.style.display='none';dv.style.display='none';bw.style.display='none';sa.style.display='none';qb.style.display='none';}
+  else if(id==='topology'){document.getElementById('ls-topology').classList.add('on');ts.style.display='none';dv.style.display='none';bw.style.display='none';sa.style.display='none';qb.style.display='none';}
+  else{ts.style.display='flex';dv.style.display='flex';bw.style.display='flex';sa.style.display='flex';qb.style.display='flex';setTimeout(function(){document.getElementById('cin').focus();},80);}
+}
+function showLeftTab(id){
+  document.querySelectorAll('.lt').forEach(function(t){t.classList.remove('on');});
+  var el=document.getElementById('lt-'+id);if(el)el.classList.add('on');
+  document.querySelectorAll('.lsection').forEach(function(s){s.classList.remove('on');});
+  var el2=document.getElementById('ls-'+id);if(el2)el2.classList.add('on');
+}
+
+function unlock(){
+  if(document.getElementById('lockInput').value.trim()==='9095'){
+    document.getElementById('lockScreen').style.display='none';
+    document.getElementById('app').style.display='flex';
+    buildPool();
+    newQ();
+    if(window.innerWidth<900){
+      document.querySelectorAll('.lsection').forEach(function(p){if(!p.classList.contains('on'))p.style.display='none';});
+    }
+  } else {
+    document.getElementById('lockErr').textContent='비밀번호가 틀렸습니다';
+    document.getElementById('lockInput').value='';
+  }
+}
+</script>
+</body>
+</html>
