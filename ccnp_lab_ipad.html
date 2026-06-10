@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CCNP ENCOR Lab Simulator</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;font-family:-apple-system,Arial,sans-serif;font-size:14px;background:#f0f0f0;color:#222;}
+#lockScreen{position:fixed;inset:0;background:#0d1117;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:18px;}
+#lockScreen h2{color:#c9d1d9;font-size:20px;font-weight:600;letter-spacing:1px;}
+#lockScreen p{color:#8b949e;font-size:13px;}
+#lockInput{background:#161b22;border:1.5px solid #30363d;border-radius:10px;color:#c9d1d9;font-size:26px;padding:14px 20px;text-align:center;outline:none;width:190px;letter-spacing:8px;-webkit-appearance:none;-webkit-text-security:disc;}
+#lockInput:focus{border-color:#4a9eff;}
+#lockBtn{background:#238636;border:none;border-radius:10px;color:#fff;font-size:16px;font-weight:600;padding:14px 0;cursor:pointer;width:190px;}
+#lockBtn:active{background:#1a6e28;}
+#lockErr{color:#f85149;font-size:13px;min-height:18px;}
+
+/* ── 전체 레이아웃 ── */
+.app{display:flex;flex-direction:column;height:100vh;max-width:900px;margin:0 auto;background:#fff;}
+
+/* ── 상단 탭바 ── */
+.topbar{display:flex;background:#1a1a2e;flex-shrink:0;}
+.topbar-tab{flex:1;padding:12px 8px;text-align:center;color:#aaa;font-size:13px;cursor:pointer;border-bottom:3px solid transparent;}
+.topbar-tab.on{color:#fff;border-bottom-color:#4a9eff;font-weight:600;}
+
+/* ── 왼쪽: Tasks / Topology ── */
+.lsection{display:none;flex-direction:column;flex:0 0 auto;}
+.lsection.on{display:flex;}
+
+/* Tasks 내용 */
+.tcontent{padding:14px;line-height:1.8;overflow-y:auto;max-height:38vh;border-bottom:1px solid #eee;}
+.tcontent h4{font-weight:600;margin-bottom:6px;font-size:13px;}
+.tcontent ol{padding-left:20px;}
+.tcontent li{margin-bottom:8px;font-size:13px;}
+.hl{background:#2d2200;color:#e3b341;padding:1px 5px;border-radius:3px;font-family:monospace;font-size:12px;font-weight:600;}
+.qbar{padding:10px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#fafafa;border-bottom:1px solid #eee;}
+.nqbtn{font-size:13px;padding:8px 16px;border-radius:8px;border:1.5px solid #e3b341;background:transparent;color:#e3b341;cursor:pointer;font-weight:600;}
+.tbadge{font-size:12px;padding:3px 10px;border-radius:6px;background:#dbeafe;color:#1d4ed8;font-weight:600;}
+
+/* Topology */
+.topobox{padding:10px;background:#f8f8f8;overflow-y:auto;max-height:42vh;border-bottom:1px solid #eee;}
+
+/* ── 디바이스 탭 ── */
+.devtabs{display:flex;background:#f5f5f5;border-bottom:1px solid #ddd;flex-shrink:0;}
+.dt{flex:1;padding:10px;font-size:13px;cursor:pointer;border-bottom:3px solid transparent;color:#666;text-align:center;}
+.dt.on{color:#111;border-bottom-color:#111;font-weight:600;}
+
+/* ── 터미널 ── */
+.term{background:#0d1117;display:flex;flex-direction:column;flex:1;min-height:0;}
+.tout{flex:1;padding:10px 12px;font-size:13px;font-family:'Courier New',monospace;color:#c9d1d9;overflow-y:auto;line-height:1.7;white-space:pre-wrap;word-break:break-all;}
+.c-ok{color:#3fb950;}.c-err{color:#f85149;}.c-info{color:#79c0ff;}.c-prompt{color:#e3b341;}.c-hint{color:#8b949e;font-style:italic;}
+
+/* 자동완성 박스 */
+.acbox{background:#161b22;border-top:1px solid #30363d;font-size:13px;font-family:'Courier New',monospace;max-height:130px;overflow-y:auto;display:none;flex-shrink:0;}
+.aci{padding:8px 12px;color:#c9d1d9;cursor:pointer;display:flex;gap:10px;align-items:baseline;border-bottom:0.5px solid #21262d;}
+.aci:active{background:#1f2937;}
+.acmd{color:#79c0ff;min-width:130px;font-size:13px;}.adsc{color:#8b949e;font-size:11px;}
+
+/* 입력창 */
+.tin{display:flex;align-items:center;border-top:1px solid #30363d;padding:8px 10px;gap:6px;background:#0d1117;flex-shrink:0;}
+.tin span{color:#e3b341;font-size:13px;font-family:'Courier New',monospace;white-space:nowrap;}
+#cin{flex:1;background:transparent;border:none;outline:none;color:#c9d1d9;font-size:15px;font-family:'Courier New',monospace;-webkit-appearance:none;}
+
+/* ── 하단 버튼 ── */
+.brow{display:flex;gap:6px;padding:8px 10px;border-top:1px solid #ddd;flex-wrap:wrap;background:#fafafa;flex-shrink:0;}
+.btn{font-size:13px;padding:9px 14px;border-radius:8px;border:1px solid #ccc;background:#fff;color:#333;cursor:pointer;flex:1;min-width:70px;text-align:center;}
+.btn:active{background:#e8e8e8;}
+.btng{border-color:#238636;color:#1a7f37;}
+.sarea{padding:8px 10px;display:flex;flex-wrap:wrap;gap:6px;border-top:1px solid #ddd;background:#fafafa;flex-shrink:0;}
+.bok{font-size:12px;padding:4px 9px;border-radius:6px;background:#0f2318;color:#3fb950;border:1px solid #238636;}
+.berr{font-size:12px;padding:4px 9px;border-radius:6px;background:#2d0f0f;color:#f85149;border:1px solid #6e2020;}
+
+/* ── 빠른입력 버튼 (iPad 전용) ── */
+.quickbar{display:flex;gap:4px;padding:6px 8px;background:#1a1a2e;overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch;}
+.quickbar::-webkit-scrollbar{display:none;}
+.qk{font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid #444;background:#2a2a3e;color:#ccc;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.qk:active{background:#3a3a5e;}
+
+/* ── 반응형: 태블릿 가로모드 ── */
+@media (min-width:768px) and (orientation:landscape){
+  .app{flex-direction:row;height:100vh;}
+  .left-col{display:flex;flex-direction:column;width:42%;border-right:1px solid #ddd;overflow:hidden;}
+  .right-col{display:flex;flex-direction:column;flex:1;overflow:hidden;}
+  .topbar{display:none;}
+  .lsection{display:flex !important;flex:1;overflow:hidden;}
+  .tcontent{max-height:none;flex:1;}
+  .topobox{max-height:none;flex:1;}
+  .left-tabs{display:flex;background:#f5f5f5;border-bottom:1px solid #ddd;flex-shrink:0;}
+  .left-tab{flex:1;padding:10px;text-align:center;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;color:#666;}
+  .left-tab.on{color:#111;border-bottom-color:#111;font-weight:600;}
+}
+@media (max-width:767px),(orientation:portrait){
+  .left-col{display:contents;}
+  .right-col{display:contents;}
+  .left-tabs{display:none;}
+  .app{height:100dvh;}
+}
+</style>
+</head>
+<body>
+<div id="lockScreen">
+  <h2>🔒 CCNP Lab</h2>
+  <p>비밀번호를 입력하세요</p>
+  <input id="lockInput" type="password" inputmode="numeric" maxlength="6" placeholder="••••" onkeydown="if(event.key==='Enter')unlock()">
+  <div id="lockErr"></div>
+  <button id="lockBtn" onclick="unlock()">입력</button>
+</div>
+
+<div class="app" id="app" style="display:none;">
+
+  <!-- 상단 탭 (세로모드) -->
+  <div class="topbar" id="topbar">
+    <div class="topbar-tab on" id="ttab-tasks" onclick="showTopTab('tasks')">📋 Tasks</div>
+    <div class="topbar-tab" id="ttab-topology" onclick="showTopTab('topology')">🗺 Topology</div>
+    <div class="topbar-tab" id="ttab-terminal" onclick="showTopTab('terminal')">💻 Terminal</div>
+  </div>
+
+  <div class="left-col" id="leftCol">
+    <!-- 태블릿 가로모드용 탭 -->
+    <div class="left-tabs">
+      <div class="left-tab on" id="ltab-tasks" onclick="showLeftTab('tasks')">Tasks</div>
+      <div class="left-tab" id="ltab-topology" onclick="showLeftTab('topology')">Topology</div>
+    </div>
+
+    <!-- Tasks 패널 -->
+    <div class="lsection on" id="ls-tasks">
+      <div class="tcontent">
+        <h4>Guidelines</h4>
+        <ol>
+          <li>All necessary preconfigurations have been applied.</li>
+          <li>Do not change the enable password or hostname for any device.</li>
+          <li>Save your configurations to NVRAM before moving to the next item.</li>
+        </ol>
+        <br>
+        <h4>Tasks</h4>
+        <p id="intro" style="font-size:13px;color:#666;margin-bottom:10px;">The Operations team started configuring several monitoring activities. Complete the configurations for the tasks below.</p>
+        <ol id="tasklist"></ol>
+        <div id="bullets" style="margin-top:6px;padding-left:16px;line-height:1.9;"></div>
+      </div>
+      <div class="qbar">
+        <button class="nqbtn" onclick="newQ()">↻ 새 문제 생성</button>
+        <span class="tbadge" id="typelabel"></span>
+        <span style="font-size:11px;color:#888;" id="qnum"></span>
+      </div>
+    </div>
+
+    <!-- Topology 패널 -->
+    <div class="lsection" id="ls-topology">
+      <div class="topobox">
+        <svg id="toposvg" width="100%" viewBox="0 0 420 290" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="416" height="286" fill="none" stroke="#ddd" stroke-width="1" rx="5"/>
+          <rect x="315" y="12" width="86" height="64" rx="4" fill="#e8f0fe" stroke="#4a6fa5" stroke-width="1"/>
+          <rect x="323" y="18" width="66" height="34" rx="3" fill="#4a6fa5"/>
+          <rect x="327" y="21" width="58" height="25" rx="2" fill="#1a3a6b"/>
+          <text x="358" y="63" font-size="11" font-weight="600" fill="#1a3a6b" text-anchor="middle">Sw1</text>
+          <rect x="20" y="70" width="86" height="56" rx="4" fill="#e8f4e8" stroke="#2d7a3a" stroke-width="1"/>
+          <ellipse cx="63" cy="87" rx="25" ry="15" fill="#2d7a3a"/>
+          <ellipse cx="63" cy="87" rx="17" ry="9" fill="#1a5c24"/>
+          <text x="63" y="138" font-size="11" font-weight="600" fill="#1a5c24" text-anchor="middle">R1</text>
+          <text x="86" y="87" font-size="9" fill="#2d7a3a">e0/0</text>
+          <line x1="106" y1="87" x2="315" y2="34" stroke="#4a6fa5" stroke-width="1.5"/>
+          <text id="sv10" x="196" y="50" font-size="10" fill="#666" text-anchor="middle">VLAN 10</text>
+          <rect x="104" y="178" width="56" height="44" rx="3" fill="#eee" stroke="#999" stroke-width="0.5"/>
+          <rect x="111" y="182" width="42" height="24" rx="2" fill="#ccc"/>
+          <text x="132" y="233" font-size="11" fill="#555" text-anchor="middle">PC1</text>
+          <rect x="326" y="190" width="56" height="44" rx="3" fill="#eee" stroke="#999" stroke-width="0.5"/>
+          <rect x="333" y="194" width="42" height="24" rx="2" fill="#ccc"/>
+          <text x="354" y="245" font-size="11" fill="#555" text-anchor="middle">PC2</text>
+          <line x1="354" y1="76" x2="354" y2="190" stroke="#999" stroke-width="1" stroke-dasharray="3,2"/>
+          <text id="sv14" x="370" y="136" font-size="9" fill="#666" text-anchor="middle" transform="rotate(90,370,136)">VLAN 14</text>
+          <line x1="315" y1="54" x2="160" y2="178" stroke="#999" stroke-width="1" stroke-dasharray="3,2"/>
+          <text id="sv12" x="230" y="128" font-size="9" fill="#666" text-anchor="middle" transform="rotate(-40,230,128)">VLAN 12</text>
+          <g id="tipTable"></g>
+        </svg>
+      </div>
+    </div>
+  </div><!-- /left-col -->
+
+  <div class="right-col" id="rightCol">
+    <div class="devtabs">
+      <div class="dt on" id="dt-R1" onclick="switchDev('R1')">R1</div>
+      <div class="dt" id="dt-Sw1" onclick="switchDev('Sw1')">Sw1</div>
+    </div>
+    <div class="term" id="termSection">
+      <div class="tout" id="tout" onclick="document.getElementById('cin').focus()"></div>
+      <div class="acbox" id="acbox"></div>
+      <!-- 빠른입력 버튼 -->
+      <div class="quickbar" id="quickbar">
+        <button class="qk" onclick="appendInput('enable')">enable</button>
+        <button class="qk" onclick="appendInput('configure terminal')">conf t</button>
+        <button class="qk" onclick="appendInput('show running-config')">show run</button>
+        <button class="qk" onclick="appendInput('end')">end</button>
+        <button class="qk" onclick="appendInput('exit')">exit</button>
+        <button class="qk" onclick="appendInput('write memory')">wr</button>
+        <button class="qk" onclick="appendInput('flow exporter')">flow exp</button>
+        <button class="qk" onclick="appendInput('transport udp')">transport</button>
+        <button class="qk" onclick="appendInput('destination')">destination</button>
+        <button class="qk" onclick="appendInput('ip sla')">ip sla</button>
+        <button class="qk" onclick="appendInput('ip sla schedule')">sla sched</button>
+        <button class="qk" onclick="appendInput('icmp-echo')">icmp-echo</button>
+        <button class="qk" onclick="appendInput('frequency')">frequency</button>
+        <button class="qk" onclick="appendInput('http get')">http get</button>
+        <button class="qk" onclick="appendInput('interface Ethernet0/0')">int e0/0</button>
+        <button class="qk" onclick="appendInput('ip flow monitor')">flow mon</button>
+        <button class="qk" onclick="appendInput('monitor session')">mon sess</button>
+        <button class="qk" onclick="appendInput('source interface')">src if</button>
+        <button class="qk" onclick="appendInput('destination interface')">dst if</button>
+        <button class="qk" onclick="appendInput('both')">both</button>
+        <button class="qk" onclick="appendInput('life forever start-time now')">forever now</button>
+      </div>
+      <div class="tin">
+        <span id="plbl">R1&gt;</span>
+        <input id="cin" type="text" autocomplete="off" autocorrect="off" autocapitalize="off"
+               spellcheck="false" inputmode="text"
+               placeholder="명령어 입력...">
+        <button id="runbtn" onclick="submitCmd()" style="background:#e3b341;border:none;border-radius:6px;color:#000;font-size:15px;font-weight:700;padding:6px 14px;cursor:pointer;flex-shrink:0;">▶</button>
+      </div>
+    </div>
+    <div class="brow">
+      <button class="btn btng" onclick="doCheck()">✓ 채점</button>
+      <button class="btn" onclick="doSolution()">모범답안</button>
+      <button class="btn" onclick="doReset()">↺ 리셋</button>
+      <button class="btn" onclick="newQ()">새 문제</button>
+    </div>
+    <div class="sarea" id="sarea"></div>
+  </div><!-- /right-col -->
+
+</div><!-- /app -->
+
+<script>
+var Q={}, qcount=0, curDev='R1', histIdx=0, acIdx=-1;
+var R1st={mode:'user',icmpSet:false,freqSet:false};
+var Sw1st={mode:'user',icmpSet:false,freqSet:false};
+var R1hist=[], Sw1hist=[];
+var R1tree={}, Sw1tree={};
+var SC={nfDone:false,nfIn:false,nfOut:false,slaDone:false,spanSrc:false,spanDst:false};
+
+function rnd(a){return a[Math.floor(Math.random()*a.length)];}
+
+function genQ(){
+  var type=rnd(['A','B','C','D']);
+  var sess=rnd([1,2,3,5,7,10,11,12,15,20]);
+  var slaOp=rnd([1,5,10,50,100,200]);
+  var aIfs=['e0/1','e0/2','e0/3','e1/0','e1/1','e1/2','e2/0','e2/1'];
+  var dIfs=['e1/0','e1/1','e1/2','e1/3','e2/0','e2/1','e2/2','e3/0'];
+  var srcIf=rnd(aIfs), srcIf2=rnd(aIfs); while(srcIf2===srcIf) srcIf2=rnd(aIfs);
+  var dstIf=rnd(dIfs); while(dstIf===srcIf) dstIf=rnd(dIfs);
+  var vM=rnd([10,20,30,40,50,100]);
+  var vP1=rnd([12,13,14,15,22,32]); while(vP1===vM) vP1=rnd([12,13,14,15,22,32]);
+  var vP2=rnd([14,16,18,24,34,44]); while(vP2===vM||vP2===vP1) vP2=rnd([14,16,18,24,34,44]);
+  var base=rnd(['10.10','10.20','172.16.1','192.168.1']);
+  var r1ip=base+'.1.2', swM=base+'.1.1';
+  var swP1=base+'.'+vP1+'.1', swP2=base+'.'+vP2+'.1';
+  var pc1=base+'.'+vP1+'.2', pc2=base+'.'+vP2+'.2';
+  var freq=rnd([60,120,300,600]);
+  var udpPort=rnd([2055,9996,4739,6343,2056]);
+  var expName=rnd(['Export-NetFlowENCOR','Export-NetFlowData','NETFLOW-EXP','NF-COLLECTOR','ENCOR-EXPORTER']);
+  var monName=rnd(['Monitor-NetFlowR1','Monitor-FlowR1','Monitor-R1Flow','NF-MONITOR']);
+  var destIP=rnd(['10.10.1.10','10.10.1.20','10.20.1.10','192.168.1.100']);
+  var r1loopOctets=[1,2,3,4,5,11,22,33,44,55,100,111,200];
+  var r1loopCount=rnd([1,2]), r1Loops=[], usedOcts=[];
+  for(var i=0;i<r1loopCount;i++){var oct=rnd(r1loopOctets);while(usedOcts.indexOf(oct)>=0)oct=rnd(r1loopOctets);usedOcts.push(oct);r1Loops.push({iface:'Loopback'+i,ip:oct+'.'+oct+'.'+oct+'.'+oct});}
+  var sw1loopCount=rnd([1,2]), sw1Loops=[];usedOcts=[];
+  for(var j=0;j<sw1loopCount;j++){var oct2=rnd(r1loopOctets);while(usedOcts.indexOf(oct2)>=0)oct2=rnd(r1loopOctets);usedOcts.push(oct2);sw1Loops.push({iface:'Loopback'+j,ip:oct2+'.'+oct2+'.'+oct2+'.'+oct2});}
+  var loopIP=sw1Loops[0].ip;
+  var pingTarget=rnd([pc1,pc2,swM,r1Loops[0].ip]);
+  Q={type:type,sess:sess,slaOp:slaOp,srcIf:srcIf,srcIf2:srcIf2,dstIf:dstIf,
+     vM:vM,vP1:vP1,vP2:vP2,r1ip:r1ip,swM:swM,swP1:swP1,swP2:swP2,pc1:pc1,pc2:pc2,
+     freq:freq,udpPort:udpPort,expName:expName,monName:monName,destIP:destIP,
+     loopIP:loopIP,pingTarget:pingTarget,r1Loops:r1Loops,sw1Loops:sw1Loops};
+}
+
+function h(v){return '<span class="hl">'+v+'</span>';}
+
+function renderTasks(){
+  var t=Q.type,q=Q;
+  document.getElementById('bullets').innerHTML='';
+  var html='';
+  if(t==='A'){
+    html='<li>Complete the Flexible NetFlow <b>Flow Exporter</b> configuration on R1 to send data to the collector using '+h('UDP port '+q.udpPort)+'.</li>';
+    html+='<li>Configure the switch port analyzer on Sw1 and mirror all communication to and from PC1 to interface '+h(q.dstIf)+' using session number '+h(q.sess)+'.</li>';
+    html+='<li>Schedule the pre-configured IP SLA operation on R1 to start running <b>immediately</b> and to run <b>indefinitely</b>.</li>';
+  } else if(t==='B'){
+    html='<li>Complete the Flexible NetFlow <b>Flow Exporter</b> configuration on R1 to send data to the collector located at '+h(q.destIP)+'.</li>';
+    html+='<li>Configure the switch port analyzer on Sw1 and mirror all communication to and from PC1 and PC2 to interface '+h(q.dstIf)+' using session number '+h(q.sess)+'.</li>';
+    html+='<li>Configure a basic IP SLA <b>HTTP GET</b> operation on R1 to monitor the server at '+h('http://'+q.destIP)+' every '+h(q.freq+' seconds')+'. Then schedule it to run immediately and indefinitely.</li>';
+  } else if(t==='C'){
+    html='<li>Enable Flexible NetFlow on R1 E0/0 in <b>both directions</b> using the pre-configured flow monitor.</li>';
+    html+='<li>Configure the switch port analyzer on Sw1 and mirror all VLAN '+h(q.vM)+' traffic to interface '+h(q.dstIf)+' using session number '+h(q.sess)+'.</li>';
+    html+='<li>Configure a basic IP SLA <b>ICMP echo</b> operation on R1 to ping Sw1\'s Loopback interface every '+h(q.freq+' seconds')+'. Then schedule it to run immediately and indefinitely.</li>';
+  } else {
+    html='<li>Enable Flexible NetFlow on R1 E0/0 in <b>both directions</b> using the pre-configured flow monitor.</li>';
+    html+='<li>Configure a basic IP SLA <b>ICMP echo</b> operation on R1 to ping PC1 every '+h(q.freq+' seconds')+'. Then schedule it to run immediately and indefinitely.</li>';
+    html+='<li>Configure the switch port analyzer on Sw1 using these settings:</li>';
+    document.getElementById('bullets').innerHTML='<ul style="list-style:disc;padding-left:20px;"><li>Session number '+h(q.sess)+'</li><li>Mirror all traffic on '+h(q.srcIf)+'</li><li>Direct output to interface '+h(q.dstIf)+'</li></ul>';
+  }
+  document.getElementById('tasklist').innerHTML=html;
+}
+
+function renderTopo(){
+  document.getElementById('sv10').textContent='VLAN '+Q.vM;
+  document.getElementById('sv12').textContent='VLAN '+Q.vP1;
+  document.getElementById('sv14').textContent='VLAN '+Q.vP2;
+  var rows=[];
+  rows.push({dev:'R1',iface:'e0/0',ip:Q.r1ip,color:'#333'});
+  Q.r1Loops.forEach(function(l){rows.push({dev:'R1',iface:l.iface,ip:l.ip,color:'#2d6a1f'});});
+  rows.push({dev:'Sw1',iface:'VLAN '+Q.vM,ip:Q.swM,color:'#333'});
+  rows.push({dev:'Sw1',iface:'VLAN '+Q.vP1,ip:Q.swP1,color:'#333'});
+  rows.push({dev:'Sw1',iface:'VLAN '+Q.vP2,ip:Q.swP2,color:'#333'});
+  Q.sw1Loops.forEach(function(l){rows.push({dev:'Sw1',iface:l.iface,ip:l.ip,color:'#2d6a1f'});});
+  rows.push({dev:'PC1',iface:'VLAN '+Q.vP1,ip:Q.pc1,color:'#333'});
+  rows.push({dev:'PC2',iface:'VLAN '+Q.vP2,ip:Q.pc2,color:'#333'});
+  var rowH=11,headerH=18,topY=188,tableX=163,tableW=250;
+  var tableH=headerH+rows.length*rowH+4;
+  var g=document.getElementById('tipTable');
+  var ns='http://www.w3.org/2000/svg';
+  var svgH=topY+tableH+14;
+  document.getElementById('toposvg').setAttribute('viewBox','0 0 420 '+svgH);
+  document.querySelector('#toposvg rect').setAttribute('height',svgH-4);
+  g.innerHTML='';
+  function el(tag,attrs){var e=document.createElementNS(ns,tag);Object.keys(attrs).forEach(function(k){e.setAttribute(k,attrs[k]);});return e;}
+  g.appendChild(el('rect',{x:tableX,y:topY,width:tableW,height:tableH,rx:3,fill:'#fff',stroke:'#ddd','stroke-width':0.5}));
+  var hdr=document.createElementNS(ns,'text');
+  hdr.setAttribute('x',tableX+5);hdr.setAttribute('y',topY+12);hdr.setAttribute('font-size','9');hdr.setAttribute('font-weight','600');hdr.setAttribute('fill','#666');
+  hdr.textContent='Device    Interface      IP';g.appendChild(hdr);
+  g.appendChild(el('line',{x1:tableX,y1:topY+16,x2:tableX+tableW,y2:topY+16,stroke:'#eee','stroke-width':0.5}));
+  rows.forEach(function(r,i){
+    var y=topY+16+rowH*(i+1);
+    var txt=document.createElementNS(ns,'text');
+    txt.setAttribute('x',tableX+5);txt.setAttribute('y',y);txt.setAttribute('font-size','8.5');txt.setAttribute('fill',r.color);
+    txt.textContent=(r.dev).padEnd(6)+'  '+(r.iface).padEnd(14)+'  '+r.ip;g.appendChild(txt);
+  });
+}
+
+function buildTrees(){
+  var t=Q.type,sess=Q.sess,srcIf=Q.srcIf,srcIf2=Q.srcIf2,dstIf=Q.dstIf;
+  var execBase=[
+    {c:'configure terminal',d:'전역 설정 모드'},{c:'show running-config',d:'전체 설정 확인'},
+    {c:'show ip sla statistics',d:'IP SLA 통계'},{c:'show flow monitor',d:'NetFlow monitor 상태'},
+    {c:'show ip interface brief',d:'인터페이스 요약'},{c:'write memory',d:'설정 저장'},
+    {c:'wr',d:'저장(단축)'},{c:'end',d:'user mode로'}
+  ];
+  var r1cfg=[],r1fe=[],r1sla=[],r1slah=[],r1if=[];
+  if(t==='A'){
+    r1cfg=[{c:'flow exporter',d:'NetFlow exporter 이름 입력 (show run 확인)'},{c:'ip sla schedule',d:'ip sla schedule <op> life forever start-time now'},{c:'end',d:'exec mode로'},{c:'exit',d:'이전 mode로'}];
+    r1fe=[{c:'transport udp',d:'transport udp <port> — Task에서 확인'},{c:'exit',d:'config mode로'},{c:'end',d:'exec mode로'}];
+  } else if(t==='B'){
+    r1cfg=[{c:'flow exporter',d:'NetFlow exporter 이름 입력 (show run 확인)'},{c:'ip sla',d:'ip sla <op> — show run에서 op번호 확인'},{c:'ip sla schedule',d:'ip sla schedule <op> life forever start-time now'},{c:'end',d:'exec mode로'},{c:'exit',d:'이전 mode로'}];
+    r1fe=[{c:'destination',d:'destination <collector-ip> — Task에서 확인'},{c:'exit',d:'config mode로'},{c:'end',d:'exec mode로'}];
+    r1sla=[{c:'http get',d:'http get <url> — Task에서 확인'},{c:'frequency',d:'frequency <seconds> — Task에서 확인'},{c:'exit',d:'config mode로'},{c:'end',d:'exec mode로'}];
+    r1slah=[{c:'frequency',d:'frequency <seconds> — Task에서 확인'},{c:'exit',d:'sla mode로'},{c:'end',d:'exec mode로'}];
+  } else {
+    r1cfg=[{c:'ip sla',d:'ip sla <op> — show run에서 op번호 확인'},{c:'ip sla schedule',d:'ip sla schedule <op> life forever start-time now'},{c:'interface Ethernet0/0',d:'flow monitor 적용할 인터페이스'},{c:'end',d:'exec mode로'},{c:'exit',d:'이전 mode로'}];
+    r1sla=[{c:'icmp-echo',d:'icmp-echo <target-ip> — show run / topology 확인'},{c:'frequency',d:'frequency <seconds> — Task에서 확인'},{c:'exit',d:'config mode로'},{c:'end',d:'exec mode로'}];
+    r1if=[{c:'ip flow monitor',d:'ip flow monitor <name> input — show run에서 이름 확인'},{c:'exit',d:'config mode로'},{c:'end',d:'exec mode로'}];
+  }
+  var src2=(t==='B')?(srcIf+','+srcIf2):srcIf;
+  R1tree={user:[{c:'enable',d:'Privileged EXEC 진입'}],exec:execBase,config:r1cfg,'config-flow-exporter':r1fe,'config-ip-sla':r1sla,'config-ip-sla-http':r1slah,'config-if':r1if};
+  Sw1tree={user:[{c:'enable',d:'Privileged EXEC 진입'}],exec:[{c:'configure terminal',d:'전역 설정 모드'},{c:'show running-config',d:'전체 설정 확인'},{c:'show monitor session',d:'show monitor session <번호>'},{c:'show vlan brief',d:'VLAN 목록 확인'},{c:'write memory',d:'설정 저장'},{c:'wr',d:'저장(단축)'},{c:'end',d:'user mode로'}],config:[{c:'monitor session',d:'monitor session <sess> source interface <if> both'},{c:'end',d:'exec mode로'},{c:'exit',d:'이전 mode로'}]};
+}
+
+function getSt(){return curDev==='R1'?R1st:Sw1st;}
+function getTree(){return curDev==='R1'?R1tree:Sw1tree;}
+function getHist(){return curDev==='R1'?R1hist:Sw1hist;}
+function getPrompt(){
+  var m=getSt().mode||'user',b=curDev;
+  if(m==='user')return b+'>';if(m==='exec')return b+'#';
+  if(m==='config')return b+'(config)#';if(m==='config-flow-exporter')return b+'(config-flow-exporter)#';
+  if(m==='config-ip-sla')return b+'(config-ip-sla)#';if(m==='config-ip-sla-http')return b+'(config-ip-sla-http)#';
+  if(m==='config-if')return b+'(config-if)#';return b+'>';
+}
+function updPrompt(){document.getElementById('plbl').textContent=getPrompt();}
+
+function tprint(txt,cls){
+  var o=document.getElementById('tout');
+  var d=document.createElement('div');if(cls)d.className=cls;d.textContent=txt;
+  o.appendChild(d);o.scrollTop=o.scrollHeight;
+}
+function norm(c){return c.trim().replace(/\s+/g,' ');}
+function appendInput(txt){
+  var cin=document.getElementById('cin');
+  cin.value=txt+' ';cin.focus();
+  renderAC(getAC(cin.value));
+}
+
+function runCmd(raw){
+  var cmd=norm(raw);if(!cmd)return;
+  tprint(getPrompt()+' '+cmd,'c-prompt');
+  if(curDev==='R1')procR1(cmd);else procSw1(cmd);
+  updPrompt();
+}
+
+function procR1(cmd){
+  var s=getSt(),m=s.mode||'user',cl=cmd.toLowerCase();
+  var t=Q.type,udpPort=Q.udpPort,expName=Q.expName,monName=Q.monName;
+  var destIP=Q.destIP,loopIP=Q.loopIP,pingTarget=Q.pingTarget,slaOp=Q.slaOp,freq=Q.freq;
+  if(m==='user'){
+    if(cl==='enable'||cl==='en')s.mode='exec';else tprint('% Invalid input: '+cmd,'c-err');
+  } else if(m==='exec'){
+    if(cl==='configure terminal'||cl==='conf t'){s.mode='config';tprint('Enter configuration commands, one per line. End with CNTL/Z.','c-info');}
+    else if(cl==='end'||cl==='disable')s.mode='user';
+    else if(cl==='wr'||cl==='write memory')tprint('Building configuration...\n[OK]','c-ok');
+    else if(cl.startsWith('show '))showR1(cl);
+    else tprint('% Invalid input: '+cmd,'c-err');
+  } else if(m==='config'){
+    if(cl==='end'){s.mode='exec';tprint('%SYS-5-CONFIG_I: Configured from console','c-info');}
+    else if(cl==='exit')s.mode='exec';
+    else if((t==='A'||t==='B')&&cl==='flow exporter '+expName.toLowerCase())s.mode='config-flow-exporter';
+    else if((t==='A'||t==='B')&&cl.startsWith('flow exporter '))tprint('% Wrong exporter name — check show run','c-err');
+    else if((t==='B'||t==='C'||t==='D')&&cl==='ip sla '+slaOp)s.mode='config-ip-sla';
+    else if((t==='B'||t==='C'||t==='D')&&/^ip sla \d+$/.test(cl))tprint('% Wrong SLA op number — check show run','c-err');
+    else if(cl.startsWith('ip sla schedule ')){
+      if(cl.includes(' '+slaOp+' ')&&cl.includes('life forever')&&cl.includes('start-time now')){SC.slaDone=true;tprint('','');}
+      else if(!cl.includes(' '+slaOp+' '))tprint('% Wrong SLA op number','c-err');
+      else tprint('% Need: life forever start-time now','c-err');
+    }
+    else if((t==='C'||t==='D')&&(cl==='interface ethernet0/0'||cl==='int e0/0'||cl==='int ethernet0/0'))s.mode='config-if';
+    else tprint('% Invalid input: '+cmd,'c-err');
+  } else if(m==='config-flow-exporter'){
+    if(cl==='end'){s.mode='exec';tprint('%SYS-5-CONFIG_I: Configured from console','c-info');}
+    else if(cl==='exit')s.mode='config';
+    else if(t==='A'&&cl.startsWith('transport udp ')){
+      var p=parseInt(cl.split(' ')[2]);
+      if(p===udpPort){SC.nfDone=true;tprint('','');}else tprint('% Wrong UDP port — task requires '+udpPort,'c-err');
+    } else if(t==='B'&&cl.startsWith('destination ')){
+      var ip=cl.split(' ')[1];
+      if(ip===destIP){SC.nfDone=true;tprint('','');}else tprint('% Wrong IP — task requires '+destIP,'c-err');
+    } else tprint('% Invalid input: '+cmd,'c-err');
+  } else if(m==='config-ip-sla'){
+    if(cl==='end'){s.mode='exec';tprint('%SYS-5-CONFIG_I: Configured from console','c-info');}
+    else if(cl==='exit')s.mode='config';
+    else if(t==='B'&&cl.startsWith('http get ')){
+      var url=cmd.replace(/^http get /i,'');
+      if(url==='http://'+destIP){s.mode='config-ip-sla-http';tprint('','');}else tprint('% Wrong URL','c-err');
+    } else if((t==='C'||t==='D')&&cl.startsWith('icmp-echo ')){
+      var tgt=(t==='C')?loopIP:pingTarget;
+      var ip2=cmd.split(' ')[1];
+      if(ip2===tgt){s.icmpSet=true;tprint('','');}else tprint('% Wrong target — task requires '+tgt,'c-err');
+    } else if(cl.startsWith('frequency ')){
+      var f=parseInt(cl.split(' ')[1]);
+      if(f===freq){s.freqSet=true;if(s.icmpSet)SC.slaDone=true;tprint('','');}else tprint('% Wrong frequency — task requires '+freq,'c-err');
+    } else tprint('% Invalid input: '+cmd,'c-err');
+  } else if(m==='config-ip-sla-http'){
+    if(cl==='end'){s.mode='exec';tprint('%SYS-5-CONFIG_I: Configured from console','c-info');}
+    else if(cl==='exit')s.mode='config-ip-sla';
+    else if(cl.startsWith('frequency ')){
+      var f2=parseInt(cl.split(' ')[1]);
+      if(f2===freq){SC.slaDone=true;s.freqSet=true;tprint('','');}else tprint('% Wrong frequency','c-err');
+    } else tprint('% Invalid input: '+cmd,'c-err');
+  } else if(m==='config-if'){
+    if(cl==='end'){s.mode='exec';tprint('%SYS-5-CONFIG_I: Configured from console','c-info');}
+    else if(cl==='exit')s.mode='config';
+    else if(cl==='ip flow monitor '+monName.toLowerCase()+' input'){SC.nfIn=true;if(SC.nfOut)SC.nfDone=true;tprint('','');}
+    else if(cl==='ip flow monitor '+monName.toLowerCase()+' output'){SC.nfOut=true;if(SC.nfIn)SC.nfDone=true;tprint('','');}
+    else if(cl.startsWith('ip flow monitor ')&&!cl.includes(monName.toLowerCase()))tprint('% Wrong monitor name — check show run','c-err');
+    else tprint('% Invalid input: '+cmd,'c-err');
+  }
+}
+
+function procSw1(cmd){
+  var s=getSt(),m=s.mode||'user',cl=cmd.toLowerCase();
+  var sess=Q.sess,srcIf=Q.srcIf,srcIf2=Q.srcIf2,dstIf=Q.dstIf,t=Q.type;
+  if(m==='user'){
+    if(cl==='enable'||cl==='en')s.mode='exec';else tprint('% Invalid input: '+cmd,'c-err');
+  } else if(m==='exec'){
+    if(cl==='configure terminal'||cl==='conf t'){s.mode='config';tprint('Enter configuration commands, one per line.','c-info');}
+    else if(cl==='end'||cl==='disable')s.mode='user';
+    else if(cl==='wr'||cl==='write memory')tprint('Building configuration...\n[OK]','c-ok');
+    else if(cl.startsWith('show '))showSw1(cl);
+    else tprint('% Invalid input: '+cmd,'c-err');
+  } else if(m==='config'){
+    if(cl==='end'){s.mode='exec';tprint('%SYS-5-CONFIG_I: Configured from console','c-info');}
+    else if(cl==='exit')s.mode='exec';
+    else {
+      var sm=cmd.match(/monitor session (\d+) source interface (\S+) (both|rx|tx)/i);
+      var dm=cmd.match(/monitor session (\d+) destination interface (\S+)/i);
+      if(sm){
+        var sessOk=parseInt(sm[1])===sess,ifOk=false;
+        if(t==='B'){var pts=sm[2].split(',');ifOk=pts.some(function(p){return p.toLowerCase()===srcIf.toLowerCase();})&&pts.some(function(p){return p.toLowerCase()===srcIf2.toLowerCase();});}
+        else ifOk=sm[2].toLowerCase()===srcIf.toLowerCase();
+        var dirOk=sm[3].toLowerCase()==='both';
+        if(sessOk&&ifOk&&dirOk){SC.spanSrc=true;tprint('','');}
+        else if(!sessOk)tprint('% Wrong session number — task requires '+sess,'c-err');
+        else if(!ifOk)tprint('% Wrong source interface','c-err');
+        else tprint('% Direction must be "both"','c-err');
+      } else if(dm){
+        var sOk=parseInt(dm[1])===sess,iOk=dm[2].toLowerCase()===dstIf.toLowerCase();
+        if(sOk&&iOk){SC.spanDst=true;tprint('','');}
+        else if(!sOk)tprint('% Wrong session number — task requires '+sess,'c-err');
+        else tprint('% Wrong destination — task requires '+dstIf,'c-err');
+      } else tprint('% Invalid input: '+cmd,'c-err');
+    }
+  }
+}
+
+function showR1(cl){
+  var q=Q,t=q.type,L=[];
+  if(cl.includes('run')){
+    L.push({t:'Building configuration...',c:'c-info'});L.push({t:'',c:''});
+    L.push({t:'Current configuration : 1842 bytes',c:'c-info'});L.push({t:'!',c:'c-info'});
+    L.push({t:'! Last configuration change at 00:14:33 UTC Mon Jan 1 2024',c:'c-info'});L.push({t:'!',c:'c-info'});
+    L.push({t:'version 16.9',c:''});L.push({t:'service timestamps debug datetime msec',c:''});L.push({t:'service timestamps log datetime msec',c:''});L.push({t:'no service password-encryption',c:''});
+    L.push({t:'!',c:'c-info'});L.push({t:'hostname R1',c:''});L.push({t:'!',c:'c-info'});
+    L.push({t:'enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0',c:''});L.push({t:'!',c:'c-info'});
+    q.r1Loops.forEach(function(lo){L.push({t:'interface '+lo.iface,c:''});L.push({t:' ip address '+lo.ip+' 255.255.255.255',c:''});L.push({t:'!',c:'c-info'});});
+    L.push({t:'interface Ethernet0/0',c:''});L.push({t:' ip address '+q.r1ip+' 255.255.255.0',c:''});
+    if(t==='C'||t==='D'){if(SC.nfIn)L.push({t:' ip flow monitor '+q.monName+' input',c:'c-ok'});if(SC.nfOut)L.push({t:' ip flow monitor '+q.monName+' output',c:'c-ok'});}
+    L.push({t:'!',c:'c-info'});
+    if(t==='A'||t==='B'){
+      L.push({t:'flow exporter '+q.expName,c:''});
+      if(t==='A'){if(SC.nfDone)L.push({t:' transport udp '+q.udpPort,c:'c-ok'});}
+      else{if(SC.nfDone)L.push({t:' destination '+q.destIP,c:'c-ok'});L.push({t:' transport udp 9996',c:''});L.push({t:' export-protocol netflow-v9',c:''});}
+      L.push({t:'!',c:'c-info'});
+      L.push({t:'flow monitor '+q.monName,c:''});L.push({t:' exporter '+q.expName,c:''});L.push({t:' cache timeout active 60',c:''});L.push({t:' record netflow ipv4 original-input',c:''});L.push({t:'!',c:'c-info'});
+    }
+    if(t==='C'||t==='D'){L.push({t:'flow monitor '+q.monName,c:''});L.push({t:' cache timeout active 60',c:''});L.push({t:' record netflow ipv4 original-input',c:''});L.push({t:'!',c:'c-info'});}
+    var tgt=(t==='C')?q.loopIP:q.pingTarget;
+    if(t==='B'){
+      L.push({t:'ip sla '+q.slaOp,c:''});
+      if(SC.slaDone){L.push({t:' http get http://'+q.destIP,c:'c-ok'});L.push({t:' frequency '+q.freq,c:'c-ok'});}
+      L.push({t:'!',c:'c-info'});if(SC.slaDone)L.push({t:'ip sla schedule '+q.slaOp+' life forever start-time now',c:'c-ok'});
+    } else if(t==='C'||t==='D'){
+      L.push({t:'ip sla '+q.slaOp,c:''});
+      if(SC.slaDone){L.push({t:' icmp-echo '+tgt+' source-interface Ethernet0/0',c:'c-ok'});L.push({t:' frequency '+q.freq,c:'c-ok'});}
+      L.push({t:'!',c:'c-info'});if(SC.slaDone)L.push({t:'ip sla schedule '+q.slaOp+' life forever start-time now',c:'c-ok'});
+    } else {
+      L.push({t:'ip sla '+q.slaOp,c:''});L.push({t:'!',c:'c-info'});
+      if(SC.slaDone)L.push({t:'ip sla schedule '+q.slaOp+' life forever start-time now',c:'c-ok'});
+    }
+    L.push({t:'!',c:'c-info'});L.push({t:'ip route 0.0.0.0 0.0.0.0 '+q.swM,c:''});L.push({t:'!',c:'c-info'});
+    L.push({t:'line con 0',c:''});L.push({t:' logging synchronous',c:''});L.push({t:'line vty 0 4',c:''});L.push({t:' login local',c:''});L.push({t:' transport input ssh',c:''});
+    L.push({t:'!',c:'c-info'});L.push({t:'end',c:'c-info'});
+    L.forEach(function(l){tprint(l.t,l.c);});
+  } else if(cl.includes('ip sla stat')){
+    tprint('IPSLAs Latest Operation Statistics','c-info');tprint('IPSLA operation id: '+Q.slaOp,'c-info');
+    if(SC.slaDone){tprint('        Latest RTT: 1 milliseconds','c-ok');tprint('Latest operation return code: OK','c-ok');}
+    else{tprint('        Latest RTT: Unknown','c-err');tprint('Latest operation return code: No scheduled operations','c-err');}
+  } else if(cl.includes('interface brief')){
+    tprint('Interface              IP-Address      OK? Method Status   Protocol','c-info');
+    Q.r1Loops.forEach(function(lo){tprint((lo.iface+'            ').slice(0,23)+(lo.ip+'            ').slice(0,16)+'YES manual up       up','');});
+    tprint('Ethernet0/0            '+(Q.r1ip+'            ').slice(0,16)+'YES manual up       up','');
+  } else if(cl.includes('flow')){
+    tprint('Flow Monitor '+Q.monName+':','c-info');tprint('  Status: '+(SC.nfDone?'Active':'Inactive'),SC.nfDone?'c-ok':'c-err');
+    if(Q.type==='A'||Q.type==='B')tprint('  Exporter: '+Q.expName+(SC.nfDone?' (configured)':' (missing transport/destination)'),SC.nfDone?'c-ok':'c-err');
+  } else tprint('% Ambiguous command','c-err');
+}
+
+function showSw1(cl){
+  var q=Q,t=q.type,sess=q.sess,srcIf=q.srcIf,srcIf2=q.srcIf2,dstIf=q.dstIf,L=[];
+  if(cl.includes('run')){
+    L.push({t:'Building configuration...',c:'c-info'});L.push({t:'',c:''});
+    L.push({t:'Current configuration : 2104 bytes',c:'c-info'});L.push({t:'!',c:'c-info'});
+    L.push({t:'version 15.2',c:''});L.push({t:'service timestamps debug datetime msec',c:''});L.push({t:'no service password-encryption',c:''});
+    L.push({t:'!',c:'c-info'});L.push({t:'hostname Sw1',c:''});L.push({t:'!',c:'c-info'});
+    L.push({t:'enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0',c:''});L.push({t:'!',c:'c-info'});
+    q.sw1Loops.forEach(function(lo){L.push({t:'interface '+lo.iface,c:''});L.push({t:' ip address '+lo.ip+' 255.255.255.255',c:''});L.push({t:'!',c:'c-info'});});
+    [[q.vM,q.swM],[q.vP1,q.swP1],[q.vP2,q.swP2]].forEach(function(v){L.push({t:'interface Vlan'+v[0],c:''});L.push({t:' ip address '+v[1]+' 255.255.255.0',c:''});L.push({t:' no shutdown',c:''});L.push({t:'!',c:'c-info'});});
+    L.push({t:'interface Ethernet0/0',c:''});L.push({t:' switchport trunk encapsulation dot1q',c:''});L.push({t:' switchport mode trunk',c:''});L.push({t:'!',c:'c-info'});
+    L.push({t:'interface Ethernet0/1',c:''});L.push({t:' switchport access vlan '+q.vP1,c:''});L.push({t:' switchport mode access',c:''});L.push({t:'!',c:'c-info'});
+    L.push({t:'interface Ethernet0/2',c:''});L.push({t:' switchport access vlan '+q.vP2,c:''});L.push({t:' switchport mode access',c:''});L.push({t:'!',c:'c-info'});
+    if(SC.spanSrc){var src2=(t==='B')?(srcIf+','+srcIf2):srcIf;L.push({t:'monitor session '+sess+' source interface '+src2+' both',c:'c-ok'});}
+    if(SC.spanDst)L.push({t:'monitor session '+sess+' destination interface '+dstIf,c:'c-ok'});
+    if(SC.spanSrc||SC.spanDst)L.push({t:'!',c:'c-info'});
+    L.push({t:'ip routing',c:''});L.push({t:'!',c:'c-info'});
+    L.push({t:'line con 0',c:''});L.push({t:' logging synchronous',c:''});L.push({t:'line vty 0 4',c:''});L.push({t:' login local',c:''});
+    L.push({t:'!',c:'c-info'});L.push({t:'end',c:'c-info'});
+    L.forEach(function(l){tprint(l.t,l.c);});
+  } else if(cl.includes('monitor')){
+    var src2=(t==='B')?(srcIf+','+srcIf2):srcIf;
+    tprint('Session '+sess,'c-info');tprint('---------','c-info');tprint('Type              : Local Session','');
+    if(SC.spanSrc)tprint('Source Ports      :  Both: '+src2,'c-ok');else tprint('Source Ports      :  None','');
+    if(SC.spanDst)tprint('Destination Ports :  '+dstIf,'c-ok');else tprint('Destination Ports :  None','');
+    if(SC.spanDst)tprint('    Encapsulation :  Native','');
+  } else if(cl.includes('vlan')){
+    tprint('VLAN Name                             Status    Ports','c-info');
+    tprint('---- -------------------------------- --------- -------------------------------','c-info');
+    tprint('1    default                          active','');
+    tprint((q.vM+'   ').slice(0,5)+('VLAN'+q.vM+'                        ').slice(0,33)+' active    Et0/0','');
+    tprint((q.vP1+'   ').slice(0,5)+('VLAN'+q.vP1+'                        ').slice(0,33)+' active    Et0/1','');
+    tprint((q.vP2+'   ').slice(0,5)+('VLAN'+q.vP2+'                        ').slice(0,33)+' active    Et0/2','');
+  } else tprint('% Ambiguous command','c-err');
+}
+
+function getAC(partial){
+  var p=partial.trim().toLowerCase();
+  var m=getSt().mode||'user',tree=getTree(),list=tree[m]||[];
+  if(!p)return list;
+  return list.filter(function(i){return i.c.toLowerCase().startsWith(p);});
+}
+function cpfx(strs){if(!strs.length)return '';var p=strs[0];for(var i=1;i<strs.length;i++){while(strs[i].indexOf(p)!==0){p=p.slice(0,-1);if(!p)return '';}}return p;}
+function renderAC(matches){
+  var box=document.getElementById('acbox');
+  if(!matches.length){box.style.display='none';acIdx=-1;return;}
+  box.innerHTML='';
+  matches.forEach(function(m,i){
+    var d=document.createElement('div');
+    d.className='aci'+(i===acIdx?' sel':'');
+    d.innerHTML='<span class="acmd">'+m.c+'</span><span class="adsc">'+m.d+'</span>';
+    d.onmousedown=function(e){e.preventDefault();document.getElementById('cin').value=m.c+' ';hideAC();document.getElementById('cin').focus();};
+    box.appendChild(d);
+  });
+  box.style.display='block';
+}
+function hideAC(){document.getElementById('acbox').style.display='none';acIdx=-1;}
+
+function submitCmd(){
+  var cin=document.getElementById('cin');
+  var v=cin.value;
+  var acVisible=document.getElementById('acbox').style.display!=='none';
+  var matches=getAC(v);
+  if(acVisible&&acIdx>=0&&matches[acIdx]){cin.value=matches[acIdx].c+' ';hideAC();return;}
+  if(v.trim())getHist().unshift(v);
+  histIdx=0;hideAC();
+  showTopTab('terminal');
+  runCmd(v);cin.value='';
+  cin.focus();
+}
+
+function unlock(){
+  var v=document.getElementById('lockInput').value.trim();
+  if(v==='9095'){
+    document.getElementById('lockScreen').style.display='none';
+    document.getElementById('app').style.display='flex';
+    newQ();
+  } else {
+    document.getElementById('lockErr').textContent='비밀번호가 틀렸습니다';
+    document.getElementById('lockInput').value='';
+    document.getElementById('lockInput').focus();
+  }
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  document.getElementById('lockInput').focus();
+  var cin=document.getElementById('cin');
+  cin.addEventListener('input',function(){acIdx=-1;var v=this.value;if(!v.trim()){hideAC();return;}renderAC(getAC(v));});
+  cin.addEventListener('keydown',function(e){
+    var inp=this,acVisible=document.getElementById('acbox').style.display!=='none';
+    var matches=getAC(inp.value);
+    if(e.key==='Tab'){
+      e.preventDefault();
+      if(!inp.value.trim()){var tree=getTree(),m=getSt().mode||'user',all=tree[m]||[];if(all.length){tprint('');all.forEach(function(x){tprint('  '+x.c.padEnd(40)+'-- '+x.d,'c-hint');});tprint('');}return;}
+      if(matches.length===1){inp.value=matches[0].c+' ';hideAC();}
+      else if(matches.length>1){var pfx=cpfx(matches.map(function(m){return m.c;}));if(pfx.length>inp.value.length)inp.value=pfx;renderAC(matches);if(matches.length<=8){tprint('');matches.forEach(function(x){tprint('  '+x.c.padEnd(40)+'-- '+x.d,'c-hint');});tprint('');}}
+      else tprint('% Unrecognized command','c-err');
+    } else if(e.key==='ArrowUp'){
+      e.preventDefault();
+      if(acVisible&&matches.length){acIdx=Math.max(0,acIdx-1);renderAC(matches);}
+      else{var h=getHist();if(histIdx<h.length){inp.value=h[histIdx];histIdx++;}}
+    } else if(e.key==='ArrowDown'){
+      if(acVisible&&matches.length){acIdx=Math.min(matches.length-1,acIdx+1);renderAC(matches);}
+      else{histIdx=Math.max(0,histIdx-1);inp.value=getHist()[histIdx-1]||'';}
+    } else if(e.key==='Enter'){
+      e.preventDefault();
+      submitCmd();
+    } else if(e.key==='Escape')hideAC();
+  });
+  // iOS Safari는 keydown Enter가 안 잡힐 수 있어서 keyup도 추가
+  cin.addEventListener('keyup',function(e){
+    if(e.key==='Enter'||e.keyCode===13){
+      e.preventDefault();
+      submitCmd();
+    }
+  });
+  // iOS form submit fallback
+  cin.addEventListener('change',function(){
+    // 포커스 잃을 때 자동실행 방지 — 아무것도 안 함
+  });
+  });
+});
+
+function newQ(){
+  genQ();qcount++;
+  document.getElementById('typelabel').textContent='Type '+Q.type;
+  document.getElementById('qnum').textContent='문제 #'+qcount;
+  renderTasks();renderTopo();buildTrees();doReset();
+}
+
+function doReset(){
+  R1st={mode:'user',icmpSet:false,freqSet:false};Sw1st={mode:'user',icmpSet:false,freqSet:false};
+  R1hist=[];Sw1hist=[];
+  SC={nfDone:false,nfIn:false,nfOut:false,slaDone:false,spanSrc:false,spanDst:false};
+  document.getElementById('tout').innerHTML='';document.getElementById('cin').value='';document.getElementById('sarea').innerHTML='';
+  hideAC();histIdx=0;acIdx=-1;curDev='R1';
+  document.querySelectorAll('.dt').forEach(function(d){d.classList.remove('on');});document.getElementById('dt-R1').classList.add('on');
+  updPrompt();
+  tprint('Cisco IOS Software Simulation','c-info');
+  tprint('빠른입력 버튼 또는 직접 입력 (Tab=자동완성)','c-info');
+  tprint('');
+}
+
+function switchDev(name){
+  curDev=name;histIdx=0;acIdx=-1;
+  document.querySelectorAll('.dt').forEach(function(d){d.classList.remove('on');});document.getElementById('dt-'+name).classList.add('on');
+  document.getElementById('tout').innerHTML='';document.getElementById('cin').value='';
+  hideAC();updPrompt();tprint('--- Switched to '+name+' ---','c-info');
+  showTopTab('terminal');
+}
+
+/* 세로모드 탭 전환 */
+function showTopTab(id){
+  document.querySelectorAll('.topbar-tab').forEach(function(t){t.classList.remove('on');});
+  document.getElementById('ttab-'+id).classList.add('on');
+  var lsecs=document.querySelectorAll('.lsection');
+  lsecs.forEach(function(s){s.classList.remove('on');});
+  var termSec=document.getElementById('termSection');
+  var devtabs=document.querySelector('.devtabs');
+  var brow=document.querySelector('.brow');
+  var sarea=document.getElementById('sarea');
+  var qb=document.getElementById('quickbar');
+  if(id==='tasks'){
+    document.getElementById('ls-tasks').classList.add('on');
+    termSec.style.display='none';devtabs.style.display='none';brow.style.display='none';sarea.style.display='none';qb.style.display='none';
+  } else if(id==='topology'){
+    document.getElementById('ls-topology').classList.add('on');
+    termSec.style.display='none';devtabs.style.display='none';brow.style.display='none';sarea.style.display='none';qb.style.display='none';
+  } else {
+    termSec.style.display='flex';devtabs.style.display='flex';brow.style.display='flex';sarea.style.display='flex';qb.style.display='flex';
+    setTimeout(function(){document.getElementById('cin').focus();},100);
+  }
+}
+
+/* 태블릿 가로모드 탭 */
+function showLeftTab(id){
+  document.querySelectorAll('.left-tab').forEach(function(t){t.classList.remove('on');});document.getElementById('ltab-'+id).classList.add('on');
+  document.querySelectorAll('.lsection').forEach(function(s){s.classList.remove('on');});document.getElementById('ls-'+id).classList.add('on');
+}
+
+function doCheck(){
+  var area=document.getElementById('sarea');area.innerHTML='';
+  var checks=[];
+  if(Q.type==='A'){checks=[{l:'R1 NetFlow UDP '+Q.udpPort,ok:SC.nfDone},{l:'SPAN src '+Q.srcIf+' sess '+Q.sess,ok:SC.spanSrc},{l:'SPAN dst '+Q.dstIf,ok:SC.spanDst},{l:'IP SLA '+Q.slaOp+' forever',ok:SC.slaDone}];}
+  else if(Q.type==='B'){checks=[{l:'R1 NetFlow dest '+Q.destIP,ok:SC.nfDone},{l:'SPAN src '+Q.srcIf+'+'+Q.srcIf2,ok:SC.spanSrc},{l:'SPAN dst '+Q.dstIf,ok:SC.spanDst},{l:'HTTP GET '+Q.freq+'s',ok:SC.slaDone}];}
+  else{checks=[{l:'flow monitor input',ok:SC.nfIn},{l:'flow monitor output',ok:SC.nfOut},{l:'SPAN src '+Q.srcIf+' sess '+Q.sess,ok:SC.spanSrc},{l:'SPAN dst '+Q.dstIf,ok:SC.spanDst},{l:'ICMP '+Q.freq+'s',ok:SC.slaDone}];}
+  var all=true;
+  checks.forEach(function(c){
+    if(!c.ok)all=false;
+    var b=document.createElement('span');b.className=c.ok?'bok':'berr';b.textContent=(c.ok?'✓ ':'✗ ')+c.l;area.appendChild(b);
+  });
+  if(all){var w=document.createElement('span');w.style.cssText='color:#1a7f37;font-weight:700;font-size:13px;';w.textContent=' 완벽합니다!';area.appendChild(w);}
+}
+
+function doSolution(){
+  var t=Q.type,sess=Q.sess,slaOp=Q.slaOp,srcIf=Q.srcIf,srcIf2=Q.srcIf2,dstIf=Q.dstIf;
+  var udpPort=Q.udpPort,expName=Q.expName,monName=Q.monName,destIP=Q.destIP,loopIP=Q.loopIP,pingTarget=Q.pingTarget,freq=Q.freq;
+  var sol=[];
+  if(curDev==='R1'){
+    if(t==='A')sol=['R1>enable','R1#configure terminal','R1(config)#flow exporter '+expName,'R1(config-flow-exporter)#transport udp '+udpPort,'R1(config-flow-exporter)#exit','R1(config)#ip sla schedule '+slaOp+' life forever start-time now','R1(config)#end','R1#wr'];
+    else if(t==='B')sol=['R1>enable','R1#configure terminal','R1(config)#flow exporter '+expName,'R1(config-flow-exporter)#destination '+destIP,'R1(config-flow-exporter)#exit','R1(config)#ip sla '+slaOp,'R1(config-ip-sla)#http get http://'+destIP,'R1(config-ip-sla-http)#frequency '+freq,'R1(config-ip-sla-http)#exit','R1(config)#ip sla schedule '+slaOp+' life forever start-time now','R1(config)#end','R1#wr'];
+    else{var tgt=(t==='C')?loopIP:pingTarget;sol=['R1>enable','R1#configure terminal','R1(config)#ip sla '+slaOp,'R1(config-ip-sla)#icmp-echo '+tgt,'R1(config-ip-sla)#frequency '+freq,'R1(config-ip-sla)#exit','R1(config)#ip sla schedule '+slaOp+' life forever start-time now','R1(config)#interface Ethernet0/0','R1(config-if)#ip flow monitor '+monName+' input','R1(config-if)#ip flow monitor '+monName+' output','R1(config-if)#end','R1#wr'];}
+  } else {
+    var src2=(t==='B')?(srcIf+','+srcIf2):srcIf;
+    sol=['Sw1>enable','Sw1#configure terminal','Sw1(config)#monitor session '+sess+' source interface '+src2+' both','Sw1(config)#monitor session '+sess+' destination interface '+dstIf,'Sw1(config)#end','Sw1#wr'];
+  }
+  tprint('─── 모범답안 ('+curDev+') ───','c-info');
+  sol.forEach(function(l){tprint('  '+l,'c-ok');});
+  tprint('────────────────','c-info');
+}
+</script>
+</body>
+</html>
