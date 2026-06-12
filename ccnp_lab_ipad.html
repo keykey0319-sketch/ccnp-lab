@@ -1,0 +1,2209 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CCNP ENCOR Lab Simulator</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;font-family:-apple-system,Arial,sans-serif;font-size:14px;background:#0d1117;color:#c9d1d9;}
+#lockScreen{position:fixed;inset:0;background:#0d1117;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:18px;}
+#lockScreen h2{color:#c9d1d9;font-size:20px;font-weight:600;}
+#lockScreen p{color:#8b949e;font-size:13px;}
+#lockInput{background:#161b22;border:1.5px solid #30363d;border-radius:10px;color:#c9d1d9;font-size:26px;padding:14px 20px;text-align:center;outline:none;width:190px;letter-spacing:8px;-webkit-appearance:none;}
+#lockInput:focus{border-color:#4a9eff;}
+#lockBtn{background:#238636;border:none;border-radius:10px;color:#fff;font-size:16px;font-weight:600;padding:14px 0;cursor:pointer;width:190px;}
+#lockErr{color:#f85149;font-size:13px;min-height:18px;}
+.app{display:flex;flex-direction:column;height:100vh;max-width:1100px;margin:0 auto;}
+.topbar{display:flex;background:#161b22;border-bottom:1px solid #30363d;flex-shrink:0;}
+.topbar-tab{flex:1;padding:11px 4px;text-align:center;color:#8b949e;font-size:12px;cursor:pointer;border-bottom:2px solid transparent;}
+.topbar-tab.on{color:#e6edf3;border-bottom-color:#4a9eff;font-weight:600;}
+.lsection{display:none;flex-direction:column;}
+.lsection.on{display:flex;}
+.tcontent{padding:14px;line-height:1.8;overflow-y:auto;flex:1;border-bottom:1px solid #30363d;}
+.tcontent b{color:#e6edf3;}
+.tcontent ol{padding-left:20px;}
+.tcontent li{margin-bottom:8px;font-size:13px;color:#c9d1d9;}
+.hl{background:#2d2200;color:#e3b341;padding:1px 5px;border-radius:3px;font-family:monospace;font-size:12px;font-weight:600;}
+.qbar{padding:8px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#161b22;border-bottom:1px solid #30363d;flex-shrink:0;}
+.nqbtn{font-size:12px;padding:7px 14px;border-radius:8px;border:1px solid #e3b341;background:transparent;color:#e3b341;cursor:pointer;font-weight:600;}
+.catbadge{font-size:11px;padding:2px 8px;border-radius:6px;background:#1c2d1c;color:#3fb950;font-weight:600;}
+.tbadge{font-size:11px;padding:2px 8px;border-radius:6px;background:#1c2d3d;color:#4a9eff;font-weight:600;}
+.topobox{padding:12px;background:#161b22;overflow-y:auto;flex:1;border-bottom:1px solid #30363d;}
+.topo-table{width:100%;border-collapse:collapse;font-size:12px;font-family:monospace;}
+.topo-table th{background:#21262d;color:#8b949e;padding:5px 8px;text-align:left;border:1px solid #30363d;}
+.topo-table td{padding:5px 8px;border:1px solid #30363d;color:#c9d1d9;}
+.topo-table tr:hover td{background:#161b22;}
+.devtabs{display:flex;background:#161b22;border-bottom:1px solid #30363d;flex-shrink:0;}
+.dt{flex:1;padding:9px;font-size:12px;cursor:pointer;border-bottom:2px solid transparent;color:#8b949e;text-align:center;}
+.dt.on{color:#e6edf3;border-bottom-color:#e6edf3;font-weight:600;}
+.term{background:#0d1117;display:flex;flex-direction:column;flex:1;min-height:0;}
+.tout{flex:1;padding:10px 12px;font-size:12px;font-family:'Courier New',monospace;color:#c9d1d9;overflow-y:auto;line-height:1.7;white-space:pre-wrap;word-break:break-all;min-height:160px;}
+.c-ok{color:#3fb950;}.c-err{color:#f85149;}.c-info{color:#79c0ff;}.c-prompt{color:#e3b341;}.c-hint{color:#6e7681;font-style:italic;}
+.acbox{background:#161b22;border-top:1px solid #30363d;font-size:12px;font-family:'Courier New',monospace;max-height:110px;overflow-y:auto;display:none;flex-shrink:0;}
+.aci{padding:5px 12px;color:#c9d1d9;cursor:pointer;display:flex;gap:8px;align-items:baseline;border-bottom:0.5px solid #21262d;}
+.aci.sel,.aci:active{background:#1f2937;}
+.acmd{color:#79c0ff;min-width:140px;font-size:12px;}.adsc{color:#6e7681;font-size:11px;}
+.quickbar{display:flex;gap:4px;padding:5px 8px;background:#161b22;overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch;border-top:1px solid #30363d;}
+.quickbar::-webkit-scrollbar{display:none;}
+.qk{font-size:11px;padding:5px 9px;border-radius:6px;border:1px solid #30363d;background:#21262d;color:#c9d1d9;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.qk:active{background:#2d333b;}
+.tin{display:flex;align-items:center;border-top:1px solid #30363d;padding:7px 10px;gap:6px;background:#0d1117;flex-shrink:0;}
+.tin span{color:#e3b341;font-size:12px;font-family:'Courier New',monospace;white-space:nowrap;}
+#cin{flex:1;background:transparent;border:none;outline:none;color:#c9d1d9;font-size:14px;font-family:'Courier New',monospace;-webkit-appearance:none;}
+#runbtn{background:#e3b341;border:none;border-radius:6px;color:#000;font-size:14px;font-weight:700;padding:5px 12px;cursor:pointer;flex-shrink:0;}
+.brow{display:flex;gap:6px;padding:7px 10px;border-top:1px solid #30363d;flex-wrap:wrap;background:#161b22;flex-shrink:0;}
+.btn{font-size:11px;padding:7px 10px;border-radius:8px;border:1px solid #30363d;background:#21262d;color:#c9d1d9;cursor:pointer;flex:1;text-align:center;}
+.btn:active{background:#2d333b;}
+.btng{border-color:#238636;color:#3fb950;}
+.sarea{padding:7px 10px;display:flex;flex-wrap:wrap;gap:5px;border-top:1px solid #30363d;background:#161b22;flex-shrink:0;min-height:8px;}
+.bok{font-size:11px;padding:3px 8px;border-radius:6px;background:#0f2318;color:#3fb950;border:1px solid #238636;}
+.berr{font-size:11px;padding:3px 8px;border-radius:6px;background:#2d0f0f;color:#f85149;border:1px solid #6e2020;}
+@media(min-width:900px){
+  .app{flex-direction:row;}
+  .left-col{display:flex!important;flex-direction:column;width:44%;border-right:1px solid #30363d;overflow:hidden;}
+  .right-col{display:flex!important;flex-direction:column;flex:1;overflow:hidden;}
+  .topbar{display:none!important;}
+  .lsection{display:flex!important;flex:1;overflow:hidden;}
+  .tcontent{max-height:none;}
+  .topobox{max-height:none;}
+  .left-tabs{display:flex!important;background:#161b22;border-bottom:1px solid #30363d;flex-shrink:0;}
+  .lt{flex:1;padding:9px;text-align:center;font-size:12px;cursor:pointer;border-bottom:2px solid transparent;color:#8b949e;}
+  .lt.on{color:#e6edf3;border-bottom-color:#e6edf3;font-weight:600;}
+}
+@media(max-width:899px){
+  .left-col{display:contents;}
+  .right-col{display:contents;}
+  .left-tabs{display:none!important;}
+  .app{height:100dvh;}
+}
+</style>
+</head>
+<body>
+<div id="lockScreen">
+  <h2>🔒 CCNP ENCOR Lab</h2>
+  <p>비밀번호를 입력하세요</p>
+  <input id="lockInput" type="password" inputmode="numeric" maxlength="6" placeholder="••••">
+  <div id="lockErr"></div>
+  <button id="lockBtn">입력</button>
+</div>
+
+<div class="app" id="app" style="display:none;">
+  <div class="topbar">
+    <div class="topbar-tab on" id="ttab-tasks" onclick="showTopTab('tasks')">📋 Tasks</div>
+    <div class="topbar-tab" id="ttab-topology" onclick="showTopTab('topology')">🗺 Topology</div>
+    <div class="topbar-tab" id="ttab-terminal" onclick="showTopTab('terminal')">💻 CLI</div>
+  </div>
+  <div class="left-col">
+    <div class="left-tabs">
+      <div class="lt on" id="lt-tasks" onclick="showLeftTab('tasks')">Tasks</div>
+      <div class="lt" id="lt-topology" onclick="showLeftTab('topology')">Topology</div>
+    </div>
+    <div class="lsection on" id="ls-tasks">
+      <div class="tcontent">
+        <p style="font-size:12px;color:#8b949e;margin-bottom:10px;" id="taskIntro"></p>
+        <ol id="tasklist" style="font-size:13px;"></ol>
+        <div id="bullets"></div>
+      </div>
+      <div class="qbar">
+        <button class="nqbtn" onclick="newQ()">↻ 새 문제</button>
+        <span class="catbadge" id="catlabel"></span>
+        <span class="tbadge" id="qnum"></span>
+      </div>
+    </div>
+    <div class="lsection" id="ls-topology">
+      <div class="topobox" id="topoContent" style="overflow-y:auto;padding:0;"></div>
+    </div>
+  </div>
+  <div class="right-col">
+    <div class="devtabs" id="devtabsEl"></div>
+    <div class="term">
+      <div class="tout" id="tout" onclick="document.getElementById('cin').focus()"></div>
+      <div class="acbox" id="acbox"></div>
+      <div class="quickbar" id="quickbar"></div>
+      <div class="tin">
+        <span id="plbl">R1&gt;</span>
+        <input id="cin" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="text" placeholder="명령어 입력...">
+        <button id="runbtn">▶</button>
+      </div>
+    </div>
+    <div class="brow">
+      <button class="btn btng" onclick="doCheck()">✓ 채점</button>
+      <button class="btn" onclick="doSolution()">모범답안</button>
+      <button class="btn" onclick="doReset()">↺ 리셋</button>
+      <button class="btn" onclick="newQ()">새 문제</button>
+    </div>
+    <div class="sarea" id="sarea"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════
+function rnd(a){return a[Math.floor(Math.random()*a.length)];}
+function pad(s,n){s=String(s);while(s.length<n)s+=' ';return s;}
+function h(v){return '<span class="hl">'+v+'</span>';}
+
+// ═══════════════════════════════════════════════════════════════
+// QUESTION GENERATORS — 100% matching real exam structure
+// ═══════════════════════════════════════════════════════════════
+
+// ── NF-A: Flow Exporter (destination + UDP) + SPAN single-source + SLA schedule ──
+// Real exam: Task says "using UDP port X" and "to interface Y using session Z"
+// PC1's Sw1 port = NOT in tasks, must find from topology table
+
+// ════════════════════════════════════════════════════════
+// QUESTION GENERATORS — PDF 원본 값 하드코딩
+// 숫자(op번호, UDP포트, session, 주소 등)만 변형
+// ════════════════════════════════════════════════════════
+
+// 공통 토폴로지 데이터 (Q1~Q6 전부 동일한 Sw1 구조)
+// R1 e0/0=10.10.1.2, Sw1 VLAN10=10.10.1.1, VLAN12=10.12.1.1, VLAN14=10.14.1.1
+// PC1 VLAN12=10.12.1.2, PC2 VLAN14=10.14.1.2, Sw1 Lo0=2.2.2.2
+
+function nfTopoRows(r1ip, swV10, swV12, swV14, pc1ip, pc2ip){
+  return [
+    {dev:'R1',   iface:'e0/0',    ip:r1ip},
+    {dev:'Sw1',  iface:'VLAN 10', ip:swV10},
+    {dev:'Sw1',  iface:'VLAN 12', ip:swV12},
+    {dev:'Sw1',  iface:'VLAN 14', ip:swV14},
+    {dev:'PC1',  iface:'VLAN 12', ip:pc1ip},
+    {dev:'PC2',  iface:'VLAN 14', ip:pc2ip}
+  ];
+}
+
+function nfShowRun(r1ip, swV10, swV12, swV14, sw1Lo, expName, monName, slaOp){
+  return {
+    R1:[
+      '!','hostname R1','!',
+      'interface Loopback0',' ip address 1.1.1.1 255.255.255.255','!',
+      'interface Ethernet0/0',' ip address '+r1ip+' 255.255.255.0','!',
+      'flow exporter '+expName,
+      ' ! ← NOT YET CONFIGURED','!',
+      'flow monitor '+monName,
+      ' exporter '+expName,
+      ' cache timeout active 60',
+      ' record netflow ipv4 original-input','!',
+      'ip sla '+slaOp,
+      ' ! ← NOT YET SCHEDULED','!',
+      'ip route 0.0.0.0 0.0.0.0 '+swV10,'!','end'
+    ],
+    Sw1:[
+      '!','hostname Sw1','!',
+      'interface Loopback0',' ip address '+sw1Lo+' 255.255.255.255','!',
+      'interface Vlan10',' ip address '+swV10+' 255.255.255.0',' no shutdown','!',
+      'interface Vlan12',' ip address '+swV12+' 255.255.255.0',' no shutdown','!',
+      'interface Vlan14',' ip address '+swV14+' 255.255.255.0',' no shutdown','!',
+      'interface Ethernet0/0',' switchport trunk encapsulation dot1q',' switchport mode trunk','!',
+      'interface Ethernet0/1',' switchport access vlan 12',' switchport mode access',
+      '! ← PC1 is on this port (VLAN 12)','!',
+      'interface Ethernet0/2',' switchport access vlan 14',' switchport mode access',
+      '! ← PC2 is on this port (VLAN 14)','!',
+      'ip routing','!','end'
+    ]
+  };
+}
+
+function nfShowBrief(r1ip, swV10, sw1Lo){
+  return {
+    R1:['Interface              IP-Address      OK? Method Status   Protocol',
+        'Loopback0              1.1.1.1         YES manual up      up',
+        'Ethernet0/0            '+r1ip+'   YES manual up      up'],
+    Sw1:['Interface              IP-Address      OK? Method Status   Protocol',
+         'Loopback0              '+sw1Lo+'    YES manual up      up',
+         'Vlan10                 '+swV10+'   YES manual up      up',
+         'Vlan12                 10.12.1.1       YES manual up      up',
+         'Vlan14                 10.14.1.1       YES manual up      up']
+  };
+}
+
+// ── Q1 유형: UDP port + SPAN single source(e0/1) + SLA schedule ──
+// PDF Q1: UDP 2055, session 11, dest e1/1, SLA op 100, exporter Export-NetFlowENCOR
+function makeNF_A(){
+  var udp    = rnd([2055, 9996, 4739, 6343]);
+  var sess   = rnd([1, 2, 5, 7, 10, 11, 12, 15, 20]);
+  var slaOp  = rnd([1, 5, 10, 50, 100, 200]);
+  var dst    = rnd(['e1/1','e1/2','e1/3','e2/0','e2/1']);
+  var expName= rnd(['Export-NetFlowENCOR','Export-NetFlowData','NETFLOW-EXP','NF-COLLECTOR']);
+  var monName= rnd(['Monitor-FlowR1','Monitor-NetFlowR1','NF-MONITOR','FlowMon-R1']);
+  var r1ip='10.10.1.2', swV10='10.10.1.1', sw1Lo='2.2.2.2';
+  var swV12='10.12.1.1', swV14='10.14.1.1', pc1ip='10.12.1.2', pc2ip='10.14.1.2';
+  return {
+    cat:'NetFlow/SPAN/SLA', sub:'A', devs:['R1','Sw1'],
+    taskIntro:'The Operations team started configuring several monitoring activities. Complete the configurations for the tasks below.',
+    tasks:[
+      'Complete the Flexible NetFlow <b>Flow Exporter</b> configuration on R1 to send data to the collector using <span class="hl">UDP port '+udp+'</span>.',
+      'Configure the switch port analyzer on Sw1 and mirror all communication to and from PC1 to interface <span class="hl">'+dst+'</span> using session number <span class="hl">'+sess+'</span>.',
+      'Schedule the pre-configured IP SLA operation on R1 to start running <b>immediately</b> and to run <b>indefinitely</b>.'
+    ],
+    vars:{udp,sess,slaOp,dst,expName,monName,spanDst:dst,vlanTrunk:10,vlanPC1:12,vlanPC2:14,r1ip,swV10,sw1Lo,pc1ip,pc2ip},
+    showRun: nfShowRun(r1ip,swV10,swV12,swV14,sw1Lo,expName,monName,slaOp),
+    showIpIntBrief: nfShowBrief(r1ip,swV10,sw1Lo),
+    topoRows: nfTopoRows(r1ip,swV10,swV12,swV14,pc1ip,pc2ip),
+    topoType:'netflow',
+    checks:[
+      {l:'R1: flow exporter '+expName+' → transport udp '+udp, ok:function(sc){return sc.nfDone;}},
+      {l:'Sw1: monitor session '+sess+' source interface e0/1 both', ok:function(sc){return sc.spanSrc;}},
+      {l:'Sw1: monitor session '+sess+' destination interface '+dst, ok:function(sc){return sc.spanDst;}},
+      {l:'R1: ip sla schedule '+slaOp+' life forever start-time now', ok:function(sc){return sc.slaDone;}}
+    ],
+    solution:{
+      R1:['R1>enable','R1#configure terminal',
+          'R1(config)#flow exporter '+expName,
+          'R1(config-flow-exporter)#transport udp '+udp,
+          'R1(config-flow-exporter)#exit',
+          'R1(config)#ip sla schedule '+slaOp+' life forever start-time now',
+          'R1(config)#end','R1#write memory'],
+      Sw1:['Sw1>enable','Sw1#configure terminal',
+           'Sw1(config)#monitor session '+sess+' source interface e0/1 both',
+           'Sw1(config)#monitor session '+sess+' destination interface '+dst,
+           'Sw1(config)#end','Sw1#write memory']
+    }
+  };
+}
+
+// ── Q2 유형: Flow Exporter destination IP + SPAN multi-source(e0/1,e0/2) + HTTP GET ──
+// PDF Q2: dest 10.10.1.10, session 2, dest e1/0, HTTP GET http://10.10.1.100 freq 600
+function makeNF_B(){
+  var destIP = rnd(['10.10.1.10','10.10.1.100','10.20.1.10','192.168.1.100']);
+  var freq   = rnd([60,120,300,600]);
+  var sess   = rnd([1,2,3,5,7,10,11,12]);
+  var slaOp  = rnd([1,5,10,50,100]);
+  var dst    = rnd(['e1/0','e1/1','e1/2','e2/0']);
+  var expName= rnd(['Export-NetFlowENCOR','Export-NetFlowData','NETFLOW-EXP']);
+  var r1ip='10.10.1.2', swV10='10.10.1.1', sw1Lo='2.2.2.2';
+  var swV12='10.12.1.1', swV14='10.14.1.1', pc1ip='10.12.1.2', pc2ip='10.14.1.2';
+  return {
+    cat:'NetFlow/SPAN/SLA', sub:'B', devs:['R1','Sw1'],
+    taskIntro:'The Operations team started configuring several monitoring activities. Complete the configurations for the tasks below.',
+    tasks:[
+      'Complete the Flexible NetFlow <b>Flow Exporter</b> configuration on R1 to send data to the collector located at <span class="hl">'+destIP+'</span>.',
+      'Configure the switch port analyzer on Sw1 and mirror all communication to and from PC1 and PC2 to interface <span class="hl">'+dst+'</span> using session number <span class="hl">'+sess+'</span>.',
+      'Configure a basic IP SLA <b>HTTP GET</b> operation on R1 to monitor the server at <span class="hl">http://'+destIP+'</span> every <span class="hl">'+freq+' seconds</span>.'
+    ],
+    vars:{destIP,freq,sess,slaOp,dst,expName,spanDst:dst,vlanTrunk:10,vlanPC1:12,vlanPC2:14,r1ip,swV10,sw1Lo,pc1ip,pc2ip},
+    showRun: nfShowRun(r1ip,swV10,swV12,swV14,sw1Lo,expName,'Monitor-FlowR1',slaOp),
+    showIpIntBrief: nfShowBrief(r1ip,swV10,sw1Lo),
+    topoRows: nfTopoRows(r1ip,swV10,swV12,swV14,pc1ip,pc2ip),
+    topoType:'netflow',
+    checks:[
+      {l:'R1: flow exporter → destination '+destIP, ok:function(sc){return sc.nfDone;}},
+      {l:'Sw1: session '+sess+' source e0/1,e0/2 both', ok:function(sc){return sc.spanSrc;}},
+      {l:'Sw1: session '+sess+' destination '+dst, ok:function(sc){return sc.spanDst;}},
+      {l:'R1: http get http://'+destIP+' freq '+freq+' + scheduled', ok:function(sc){return sc.slaDone;}}
+    ],
+    solution:{
+      R1:['R1>enable','R1#configure terminal',
+          'R1(config)#flow exporter '+expName,
+          'R1(config-flow-exporter)#destination '+destIP,
+          'R1(config-flow-exporter)#exit',
+          'R1(config)#ip sla '+slaOp,
+          'R1(config-ip-sla)#http get http://'+destIP,
+          'R1(config-ip-sla-http)#frequency '+freq,
+          'R1(config-ip-sla-http)#exit',
+          'R1(config)#ip sla schedule '+slaOp+' life forever start-time now',
+          'R1(config)#end','R1#write memory'],
+      Sw1:['Sw1>enable','Sw1#configure terminal',
+           'Sw1(config)#monitor session '+sess+' source interface e0/1,e0/2 both',
+           'Sw1(config)#monitor session '+sess+' destination interface '+dst,
+           'Sw1(config)#end','Sw1#write memory']
+    }
+  };
+}
+
+// ── Q3 유형: ip flow monitor on E0/0 + SPAN VLAN source + ICMP to Sw1 Loopback ──
+// PDF Q3: session 10, source vlan 10, dest e0/3, ICMP Sw1 Lo(2.2.2.2) freq 300, SLA op 10
+function makeNF_C(){
+  var sess   = rnd([5,7,10,11,12,15,20]);
+  var slaOp  = rnd([1,5,10,50,100]);
+  var dst    = rnd(['e0/3','e1/0','e1/1','e1/2','e1/3']);
+  var freq   = rnd([60,120,300,600]);
+  var monName= rnd(['Monitor-FlowR1','Monitor-NetFlowR1','NF-MONITOR','FlowMon-R1']);
+  var sw1Lo  = rnd(['2.2.2.2','3.3.3.3','5.5.5.5','10.1.1.1']);
+  var r1ip='10.10.1.2', swV10='10.10.1.1';
+  var swV12='10.12.1.1', swV14='10.14.1.1', pc1ip='10.12.1.2', pc2ip='10.14.1.2';
+  return {
+    cat:'NetFlow/SPAN/SLA', sub:'C', devs:['R1','Sw1'],
+    taskIntro:'The Operations team started configuring several monitoring activities. Complete the configurations for the tasks below.',
+    tasks:[
+      'Enable Flexible NetFlow on R1 E0/0 in <b>both directions</b> using the pre-configured flow monitor.',
+      'Configure the switch port analyzer on Sw1 and mirror all VLAN <span class="hl">10</span> traffic to interface <span class="hl">'+dst+'</span> using session number <span class="hl">'+sess+'</span>.',
+      'Configure a basic IP SLA <b>ICMP echo</b> operation on R1 to ping Sw1\'s Loopback interface every <span class="hl">'+freq+' seconds</span>. Then schedule it to start immediately and run indefinitely.'
+    ],
+    vars:{sess,slaOp,dst,freq,monName,sw1Lo,spanDst:dst,vlanTrunk:10,vlanPC1:12,vlanPC2:14,r1ip,swV10,pc1ip,pc2ip},
+    showRun:{
+      R1:['!','hostname R1','!',
+          'interface Ethernet0/0',' ip address '+r1ip+' 255.255.255.0',
+          ' ! ip flow monitor ← NOT YET CONFIGURED','!',
+          'flow monitor '+monName,' cache timeout active 60',' record netflow ipv4 original-input','!',
+          'ip sla '+slaOp,' ! ← NOT YET SCHEDULED','!',
+          'ip route 0.0.0.0 0.0.0.0 '+swV10,'!','end'],
+      Sw1:['!','hostname Sw1','!',
+           'interface Loopback0',' ip address '+sw1Lo+' 255.255.255.255','!',
+           'interface Vlan10',' ip address '+swV10+' 255.255.255.0',' no shutdown','!',
+           'interface Ethernet0/0',' switchport trunk encapsulation dot1q',' switchport mode trunk','!',
+           'interface Ethernet0/1',' switchport access vlan 12',' switchport mode access','! ← PC1','!',
+           'interface Ethernet0/2',' switchport access vlan 14',' switchport mode access','! ← PC2','!',
+           'ip routing','!','end']
+    },
+    showIpIntBrief:{
+      R1:['Interface              IP-Address      OK? Method Status   Protocol',
+          'Loopback0              1.1.1.1         YES manual up      up',
+          'Ethernet0/0            '+r1ip+'   YES manual up      up'],
+      Sw1:['Interface              IP-Address      OK? Method Status   Protocol',
+           'Loopback0              '+sw1Lo+'    YES manual up      up',
+           'Vlan10                 '+swV10+'   YES manual up      up']
+    },
+    topoRows: nfTopoRows(r1ip,swV10,swV12,swV14,pc1ip,pc2ip),
+    topoType:'netflow',
+    checks:[
+      {l:'R1: ip flow monitor '+monName+' input (E0/0)', ok:function(sc){return sc.nfIn;}},
+      {l:'R1: ip flow monitor '+monName+' output (E0/0)', ok:function(sc){return sc.nfOut;}},
+      {l:'Sw1: session '+sess+' source vlan 10 both', ok:function(sc){return sc.spanSrc;}},
+      {l:'Sw1: session '+sess+' destination '+dst, ok:function(sc){return sc.spanDst;}},
+      {l:'R1: icmp-echo '+sw1Lo+' freq '+freq+' + scheduled', ok:function(sc){return sc.slaDone;}}
+    ],
+    solution:{
+      R1:['R1>enable','R1#configure terminal',
+          'R1(config)#ip sla '+slaOp,
+          'R1(config-ip-sla)#icmp-echo '+sw1Lo,
+          'R1(config-ip-sla)#frequency '+freq,
+          'R1(config-ip-sla)#exit',
+          'R1(config)#ip sla schedule '+slaOp+' life forever start-time now',
+          'R1(config)#interface Ethernet0/0',
+          'R1(config-if)#ip flow monitor '+monName+' input',
+          'R1(config-if)#ip flow monitor '+monName+' output',
+          'R1(config-if)#end','R1#write memory'],
+      Sw1:['Sw1>enable','Sw1#configure terminal',
+           'Sw1(config)#monitor session '+sess+' source vlan 10 both',
+           'Sw1(config)#monitor session '+sess+' destination interface '+dst,
+           'Sw1(config)#end','Sw1#write memory']
+    }
+  };
+}
+
+// ── Q4/Q5 유형: ip flow monitor + ICMP Sw1 Lo + SPAN bullet형 ──
+// PDF Q4: dest 10.10.1.110, HTTP GET freq 300, SPAN sess 7, source e0/0, dest e1/1
+// PDF Q5: flow monitor, ICMP Sw1 Lo freq 60, SPAN sess 5, source e0/2, dest e1/0
+function makeNF_D(){
+  var spanSrc= rnd(['e0/0','e0/1','e0/2','e0/3']);
+  var spanDst= rnd(['e1/0','e1/1','e1/2','e1/3']); while(spanDst===spanSrc.replace('0/','1/')) spanDst=rnd(['e1/0','e1/1','e1/2','e1/3']);
+  var sess   = rnd([3,5,7,10,12,15,20]);
+  var slaOp  = rnd([1,5,10,50,100]);
+  var freq   = rnd([60,120,300,600]);
+  var monName= rnd(['Monitor-FlowR1','Monitor-NetFlowR1','NF-MONITOR']);
+  var sw1Lo  = rnd(['2.2.2.2','3.3.3.3','5.5.5.5']);
+  var r1ip='10.10.1.2', swV10='10.10.1.1';
+  var swV12='10.12.1.1', swV14='10.14.1.1', pc1ip='10.12.1.2', pc2ip='10.14.1.2';
+  return {
+    cat:'NetFlow/SPAN/SLA', sub:'D', devs:['R1','Sw1'],
+    taskIntro:'The Operations team started configuring several monitoring activities. Complete the configurations for the tasks below.',
+    tasks:[
+      'Enable Flexible NetFlow on R1 E0/0 in <b>both directions</b> using the pre-configured flow monitor.',
+      'Configure a basic IP SLA <b>ICMP echo</b> operation on R1 to ping Sw1\'s Loopback interface every <span class="hl">'+freq+' seconds</span>. Then schedule it to start immediately and run indefinitely.',
+      'Configure the switch port analyzer on Sw1 using these settings:'
+    ],
+    bullets:'<ul style="list-style:disc;padding-left:22px;margin-top:6px;line-height:2;"><li>Session number <span class="hl">'+sess+'</span></li><li>Mirror all traffic on <span class="hl">'+spanSrc+'</span></li><li>Direct the output to interface <span class="hl">'+spanDst+'</span></li></ul>',
+    vars:{spanSrc,spanDst,sess,slaOp,freq,monName,sw1Lo,vlanTrunk:10,vlanPC1:12,vlanPC2:14,r1ip,swV10,pc1ip,pc2ip},
+    showRun:{
+      R1:['!','hostname R1','!',
+          'interface Ethernet0/0',' ip address '+r1ip+' 255.255.255.0',
+          ' ! ip flow monitor ← NOT YET CONFIGURED','!',
+          'flow monitor '+monName,' cache timeout active 60',' record netflow ipv4 original-input','!',
+          'ip sla '+slaOp,' ! ← NOT YET SCHEDULED','!',
+          'ip route 0.0.0.0 0.0.0.0 '+swV10,'!','end'],
+      Sw1:['!','hostname Sw1','!',
+           'interface Loopback0',' ip address '+sw1Lo+' 255.255.255.255','!',
+           'interface Vlan10',' ip address '+swV10+' 255.255.255.0',' no shutdown','!',
+           'interface Ethernet0/1',' switchport access vlan 12',' switchport mode access','! ← PC1','!',
+           'interface Ethernet0/2',' switchport access vlan 14',' switchport mode access','! ← PC2','!',
+           'ip routing','!','end']
+    },
+    showIpIntBrief:{
+      R1:['Interface              IP-Address      OK? Method Status   Protocol',
+          'Loopback0              1.1.1.1         YES manual up      up',
+          'Ethernet0/0            '+r1ip+'   YES manual up      up'],
+      Sw1:['Interface              IP-Address      OK? Method Status   Protocol',
+           'Loopback0              '+sw1Lo+'    YES manual up      up',
+           'Vlan10                 '+swV10+'   YES manual up      up']
+    },
+    topoRows: nfTopoRows(r1ip,swV10,swV12,swV14,pc1ip,pc2ip),
+    topoType:'netflow',
+    checks:[
+      {l:'R1: ip flow monitor '+monName+' input+output', ok:function(sc){return sc.nfIn&&sc.nfOut;}},
+      {l:'R1: icmp-echo '+sw1Lo+' freq '+freq+' + scheduled', ok:function(sc){return sc.slaDone;}},
+      {l:'Sw1: session '+sess+' source '+spanSrc+' both', ok:function(sc){return sc.spanSrc;}},
+      {l:'Sw1: session '+sess+' destination '+spanDst, ok:function(sc){return sc.spanDst;}}
+    ],
+    solution:{
+      R1:['R1>enable','R1#configure terminal',
+          'R1(config)#ip sla '+slaOp,
+          'R1(config-ip-sla)#icmp-echo '+sw1Lo,
+          'R1(config-ip-sla)#frequency '+freq,
+          'R1(config-ip-sla)#exit',
+          'R1(config)#ip sla schedule '+slaOp+' life forever start-time now',
+          'R1(config)#interface Ethernet0/0',
+          'R1(config-if)#ip flow monitor '+monName+' input',
+          'R1(config-if)#ip flow monitor '+monName+' output',
+          'R1(config-if)#end','R1#write memory'],
+      Sw1:['Sw1>enable','Sw1#configure terminal',
+           'Sw1(config)#monitor session '+sess+' source interface '+spanSrc+' both',
+           'Sw1(config)#monitor session '+sess+' destination interface '+spanDst,
+           'Sw1(config)#end','Sw1#write memory']
+    }
+  };
+}
+
+// ── OSPF A: ip ospf on interfaces (no network stmt) ──
+// PDF Q7: R20, pid 20, lo0, rid 10.0.1.20, Area 40 /18 summary 10.40.0.0/18
+function makeOSPF_A(){
+  var devName= rnd(['R20','R30']);
+  var pid    = rnd([10,20,30,100]);
+  var loopNum= rnd([0,1]);
+  var loopIP = devName==='R20'?'10.0.1.'+rnd([10,20,30]):('10.0.1.'+rnd([10,20,30]));
+  var stub   = devName==='R20'?40:50;
+  var summNet= '10.'+stub+'.0.0';
+  var summMask='255.255.192.0'; // /18
+  var pfx=18;
+  var e0ip='10.10.20.1', e1ip='10.20.30.1', e2ip='10.'+stub+'.50.1';
+  if(devName==='R30'){e0ip='10.10.30.1';e1ip='10.20.30.2';}
+  return {
+    cat:'OSPF', sub:'A', devs:[devName],
+    taskIntro:'OSPF is preconfigured on all devices except '+devName+'. Configure '+devName+' to complete these tasks.',
+    tasks:[
+      '<b>Task 1:</b> Configure OSPF according to the topology using these requirements:<ul style="margin-top:6px;line-height:2;padding-left:20px;"><li>Use Process ID <span class="hl">'+pid+'</span>.</li><li>Use Loopback'+loopNum+' for the Router ID.</li><li>Advertise all networks into OSPF.</li><li>Do <b>not</b> use network statements under the OSPF process to accomplish this task.</li></ul>',
+      '<b>Task 2:</b> Configure a /'+pfx+' summary route for Area <span class="hl">'+stub+'</span>.'
+    ],
+    vars:{pid,loopNum,loopIP,stub,summNet,summMask,devName,e0ip,e1ip,e2ip},
+    showRun:{
+      [devName]:[
+        '!','hostname '+devName,'!',
+        'interface Loopback'+loopNum,' ip address '+loopIP+' 255.255.255.255','!',
+        'interface Ethernet0/0',' ip address '+e0ip+' 255.255.255.0','!',
+        'interface Ethernet0/1',' ip address '+e1ip+' 255.255.255.0','!',
+        'interface Ethernet0/2',' ip address '+e2ip+' 255.255.255.0','!',
+        'ip routing','!','end'
+      ]
+    },
+    showIpIntBrief:{
+      [devName]:[
+        'Interface              IP-Address      OK? Method Status   Protocol',
+        'Loopback'+loopNum+'              '+loopIP+'   YES manual up      up',
+        'Ethernet0/0            '+e0ip+'   YES manual up      up',
+        'Ethernet0/1            '+e1ip+'   YES manual up      up',
+        'Ethernet0/2            '+e2ip+'   YES manual up      up'
+      ]
+    },
+    topoRows:null, topoType:'ospf',
+    checks:[
+      {l:'router ospf '+pid, ok:function(sc){return sc.ospfProc;}},
+      {l:'router-id '+loopIP, ok:function(sc){return sc.ospfRid;}},
+      {l:'ip ospf '+pid+' area 0 (lo'+loopNum+', e0/0, e0/1)', ok:function(sc){return sc.ospfIface;}},
+      {l:'ip ospf '+pid+' area '+stub+' (e0/2)', ok:function(sc){return sc.ospfStub;}},
+      {l:'area '+stub+' range '+summNet+' '+summMask, ok:function(sc){return sc.ospfRange;}}
+    ],
+    solution:{
+      [devName]:[
+        devName+'>enable',devName+'#configure terminal',
+        devName+'(config)#router ospf '+pid,
+        devName+'(config-router)#router-id '+loopIP,
+        devName+'(config-router)#area '+stub+' range '+summNet+' '+summMask,
+        devName+'(config-router)#exit',
+        devName+'(config)#interface range loopback'+loopNum+',Ethernet0/0-1',
+        devName+'(config-if-range)#ip ospf '+pid+' area 0',
+        devName+'(config-if-range)#interface Ethernet0/2',
+        devName+'(config-if)#ip ospf '+pid+' area '+stub,
+        devName+'(config-if)#end',devName+'#write memory'
+      ]
+    }
+  };
+}
+
+// ── OSPF B: network statements ──
+// PDF Q8: R30, pid 10, lo0, rid 10.0.1.30, Area 50 /17 summary 10.50.0.0/17
+function makeOSPF_B(){
+  var devName= rnd(['R20','R30']);
+  var pid    = rnd([10,20,30,100]);
+  var loopNum= rnd([0,1]);
+  var loopIP = '10.0.1.'+rnd([10,20,30]);
+  var stub   = devName==='R20'?40:50;
+  var summNet= '10.'+stub+'.0.0';
+  var summMask='255.255.128.0'; // /17
+  var pfx=17;
+  var e0ip='10.10.20.1', e1ip='10.20.30.1', e2ip='10.'+stub+'.50.1';
+  if(devName==='R30'){e0ip='10.10.30.1';e1ip='10.20.30.2';}
+  return {
+    cat:'OSPF', sub:'B', devs:[devName],
+    taskIntro:'OSPF is preconfigured on all devices except '+devName+'. Configure '+devName+' to complete these tasks.',
+    tasks:[
+      '<b>Task 1:</b> Configure OSPF according to the topology using these requirements:<ul style="margin-top:6px;line-height:2;padding-left:20px;"><li>Use Process ID <span class="hl">'+pid+'</span>.</li><li>Use Loopback'+loopNum+' for the Router ID.</li><li>Advertise all networks into OSPF.</li><li>Use <b>network statements</b> under the OSPF process to accomplish this task.</li></ul>',
+      '<b>Task 2:</b> Configure a /'+pfx+' summary route for Area <span class="hl">'+stub+'</span>.'
+    ],
+    vars:{pid,loopNum,loopIP,stub,summNet,summMask,devName,e0ip,e1ip,e2ip},
+    showRun:{
+      [devName]:[
+        '!','hostname '+devName,'!',
+        'interface Loopback'+loopNum,' ip address '+loopIP+' 255.255.255.255','!',
+        'interface Ethernet0/0',' ip address '+e0ip+' 255.255.255.0','!',
+        'interface Ethernet0/1',' ip address '+e1ip+' 255.255.255.0','!',
+        'interface Ethernet0/2',' ip address '+e2ip+' 255.255.255.0','!',
+        'ip routing','!','end'
+      ]
+    },
+    showIpIntBrief:{
+      [devName]:[
+        'Interface              IP-Address      OK? Method Status   Protocol',
+        'Loopback'+loopNum+'              '+loopIP+'   YES manual up      up',
+        'Ethernet0/0            '+e0ip+'   YES manual up      up',
+        'Ethernet0/2            '+e2ip+'   YES manual up      up'
+      ]
+    },
+    topoRows:null, topoType:'ospf',
+    checks:[
+      {l:'router ospf '+pid, ok:function(sc){return sc.ospfProc;}},
+      {l:'router-id '+loopIP, ok:function(sc){return sc.ospfRid;}},
+      {l:'network statements area 0', ok:function(sc){return sc.ospfNet;}},
+      {l:'network '+e2ip.replace('.1','').replace(/\.\d+$/,'.0')+' area '+stub, ok:function(sc){return sc.ospfNetStub;}},
+      {l:'area '+stub+' range '+summNet+' '+summMask, ok:function(sc){return sc.ospfRange;}}
+    ],
+    solution:{
+      [devName]:[
+        devName+'>enable',devName+'#configure terminal',
+        devName+'(config)#router ospf '+pid,
+        devName+'(config-router)#router-id '+loopIP,
+        devName+'(config-router)#network '+loopIP+' 0.0.0.0 area 0',
+        devName+'(config-router)#network '+e0ip.replace(/\.\d+$/,'.0')+' 0.0.0.255 area 0',
+        devName+'(config-router)#network '+e1ip.replace(/\.\d+$/,'.0')+' 0.0.0.255 area 0',
+        devName+'(config-router)#network '+e2ip.replace(/\.\d+$/,'.0')+' 0.0.0.255 area '+stub,
+        devName+'(config-router)#area '+stub+' range '+summNet+' '+summMask,
+        devName+'(config-router)#end',devName+'#write memory'
+      ]
+    }
+  };
+}
+
+// ── VRF+Tunnel ──
+// PDF Q9: R11 설정, Finance VRF, Tunnel10, dest 209.165.201.6, e0/1=10.11.11.1/30
+// PDF Q10: R22 설정, Finance VRF, Tunnel10, dest 209.165.200.230
+function makeVRF(){
+  var target = rnd(['R11','R22']);
+  var other  = target==='R11'?'R22':'R11';
+  var vrf    = 'Finance';
+  var tunNum = 10;
+  var ispMe  = target==='R11'?'209.165.200.228':'209.165.201.2';
+  var ispOther=target==='R11'?'209.165.201.6':'209.165.200.230';
+  var ispGW  = target==='R11'?'209.165.200.225':'209.165.201.1';
+  var e01me  = target==='R11'?'10.11.11.1':'10.22.22.1';
+  var e01other=target==='R11'?'10.11.11.2':'10.22.22.2';
+  var tunMe  = target==='R11'?'10.10.10.1':'10.10.10.2';
+  var tunOther=target==='R11'?'10.10.10.2':'10.10.10.1';
+  return {
+    cat:'VRF+Tunnel', sub:'A', devs:[target],
+    taskIntro:'A colleague started configuring a new network. All configurations on '+other+' are complete. Complete the configurations on '+target+' for the tasks below.',
+    tasks:[
+      '<b>Task 1:</b> Extend the <span class="hl">Finance</span> VRF between '+target+' and '+other+' using <span class="hl">Tunnel '+tunNum+'</span>.',
+      '<b>Task 2:</b> Complete the Finance VRF configuration on '+target+' and configure static routing so that traffic between VLAN 111 and VLAN 222 uses Tunnel '+tunNum+' exclusively.<br><small style="color:#8b949e;display:block;margin-top:4px;">Note: '+other.replace('R','Sw')+' can be used to validate traffic flow.</small>'
+    ],
+    vars:{vrf,tunNum,target,other,ispIPme:ispMe,ispIPother:ispOther,ispGW,e01me,e01other,tunMe,tunOther},
+    showRun:{
+      [target]:[
+        '!','hostname '+target,'!',
+        'vrf definition Finance',' address-family ipv4','  exit-address-family','!',
+        'interface Ethernet0/0',' ip address '+ispMe+' 255.255.255.252','!',
+        'interface Ethernet0/1',' ! ip vrf forwarding Finance ← NOT YET CONFIGURED','!',
+        'interface Tunnel'+tunNum,' ! ip vrf forwarding Finance ← NOT YET CONFIGURED','!',
+        'ip route 0.0.0.0 0.0.0.0 '+ispGW,'!','end'
+      ]
+    },
+    showIpIntBrief:{
+      [target]:[
+        'Interface              IP-Address      OK? Method Status   Protocol',
+        'Ethernet0/0            '+ispMe+'   YES manual up      up',
+        'Ethernet0/1            unassigned        YES unset  admin down  down',
+        'Tunnel'+tunNum+'                unassigned        YES unset  down      down'
+      ]
+    },
+    topoRows:[
+      {dev:target,   iface:'e0/0 (ISP)',  ip:ispMe+'/30'},
+      {dev:other,    iface:'e0/0 (ISP)',  ip:ispOther+'/30 ← tunnel destination'},
+      {dev:'Tunnel'+tunNum, iface:target, ip:tunMe+'/30'},
+      {dev:'Sw11',   iface:'VLAN 111',    ip:'10.10.111.0/24 (Finance VRF)'},
+      {dev:'Sw22',   iface:'VLAN 222',    ip:'10.10.222.0/24 (Finance VRF)'}
+    ],
+    topoType:'vrf',
+    checks:[
+      {l:target+' e0/1: ip vrf forwarding Finance', ok:function(sc){return sc.vrfIface;}},
+      {l:target+' Tunnel'+tunNum+': ip vrf forwarding Finance', ok:function(sc){return sc.tunVrf;}},
+      {l:target+' Tunnel'+tunNum+': source e0/0 + destination '+ispOther, ok:function(sc){return sc.tunSrcDst;}},
+      {l:target+': ip route vrf Finance (×2)', ok:function(sc){return sc.vrfRoute>=2;}}
+    ],
+    solution:{
+      [target]:[
+        target+'>enable',target+'#configure terminal',
+        target+'(config)#interface Ethernet0/1',
+        target+'(config-if)#ip vrf forwarding Finance',
+        target+'(config-if)#ip address '+e01me+' 255.255.255.252',
+        target+'(config-if)#no shutdown',
+        target+'(config-if)#exit',
+        target+'(config)#interface Tunnel'+tunNum,
+        target+'(config-if)#ip vrf forwarding Finance',
+        target+'(config-if)#ip address '+tunMe+' 255.255.255.252',
+        target+'(config-if)#tunnel source Ethernet0/0',
+        target+'(config-if)#tunnel destination '+ispOther,
+        target+'(config-if)#no shutdown',
+        target+'(config-if)#exit',
+        target+'(config)#ip route vrf Finance 10.10.111.0 255.255.255.0 '+e01other,
+        target+'(config)#ip route vrf Finance 10.10.222.0 255.255.255.0 '+tunOther,
+        target+'(config)#end',target+'#write memory'
+      ]
+    }
+  };
+}
+
+// ── EtherChannel+STP ──
+// PDF Q11: Sw10, Po10, old Po11 (mode on), Ethernet0/0-2, VLAN 10,20
+function makeEC(){
+  var poNum  = rnd([10,20,21,1,2]);
+  var oldPo  = rnd([11,12,5,3]); while(oldPo===poNum) oldPo=rnd([11,12,5,3]);
+  var ifRange= rnd(['Ethernet0/0-2','Ethernet0/0-1']);
+  var vlans  = rnd(['10,20','10','20','10,30']);
+  return {
+    cat:'EtherChannel+STP', sub:'A', devs:['Sw10'],
+    taskIntro:'Complete the tasks below by making changes to Sw10 only. No access is provided to Sw20 or Sw30.',
+    tasks:[
+      '<b>Task 1:</b> Sw20 is actively attempting to negotiate an 802.1Q trunking EtherChannel with Sw10 using LACP, but the channel is not functional. Resolve the issues on Sw10.',
+      '<b>Task 2:</b> Modify the spanning tree configuration to ensure that Sw10 is always the root for VLAN <span class="hl">'+vlans+'</span>.'
+    ],
+    vars:{poNum,oldPo,ifRange,vlans,spanDst:null,vlanTrunk:null,vlanPC1:null,vlanPC2:null},
+    showRun:{
+      Sw10:[
+        '!','hostname Sw10','!',
+        '! ▼ 현재 잘못된 설정 (mode on = LACP 미지원)',
+        'interface Port-channel'+oldPo,
+        ' switchport trunk encapsulation dot1q',' switchport mode trunk','!',
+        'interface Ethernet0/0',
+        ' switchport trunk encapsulation dot1q',' switchport mode trunk',
+        ' channel-group '+oldPo+' mode on','!',
+        'interface Ethernet0/1',
+        ' switchport trunk encapsulation dot1q',' switchport mode trunk',
+        ' channel-group '+oldPo+' mode on','!',
+        'spanning-tree mode pvst','!','end'
+      ]
+    },
+    showIpIntBrief:{
+      Sw10:['Interface              IP-Address      OK? Method Status   Protocol',
+            'Port-channel'+oldPo+'        unassigned        YES unset  up      up',
+            'Ethernet0/0            unassigned        YES unset  up      up']
+    },
+    topoRows:null, topoType:'etherchannel',
+    checks:[
+      {l:'no interface Port-channel'+oldPo, ok:function(sc){return sc.noOldPo;}},
+      {l:ifRange+' channel-group '+poNum+' mode active', ok:function(sc){return sc.lacp;}},
+      {l:'Port-channel'+poNum+' trunk', ok:function(sc){return sc.poTrunk;}},
+      {l:'spanning-tree vlan '+vlans+' priority 0', ok:function(sc){return sc.stpRoot;}}
+    ],
+    solution:{
+      Sw10:['Sw10>enable','Sw10#configure terminal',
+            'Sw10(config)#no interface Port-channel'+oldPo,
+            'Sw10(config)#interface range '+ifRange,
+            'Sw10(config-if-range)#switchport trunk encapsulation dot1q',
+            'Sw10(config-if-range)#switchport mode trunk',
+            'Sw10(config-if-range)#channel-group '+poNum+' mode active',
+            'Sw10(config-if-range)#no shutdown',
+            'Sw10(config-if-range)#exit',
+            'Sw10(config)#interface Port-channel'+poNum,
+            'Sw10(config-if)#switchport trunk encapsulation dot1q',
+            'Sw10(config-if)#switchport mode trunk',
+            'Sw10(config-if)#no shutdown',
+            'Sw10(config-if)#exit',
+            'Sw10(config)#spanning-tree vlan '+vlans+' priority 0',
+            'Sw10(config)#end','Sw10#write memory']
+    }
+  };
+}
+
+// ── eBGP ──
+// PDF Q13: R2 설정, AS65200, neighbor R1=209.165.200.225(AS65100), R3=209.165.200.229(AS65300)
+//          Lo0=2.2.2.2, Lo1=22.22.22.22, Lo2=222.222.222.222
+function makeBGP(){
+  var localAs= rnd([65100,65200,65300,100,200]);
+  var as2    = rnd([65100,65200,65300,100,200]); while(as2===localAs) as2=rnd([65100,65200,100,200]);
+  var as3    = rnd([65100,65200,65300,100,200]); while(as3===localAs||as3===as2) as3=rnd([65100,65200,300]);
+  var loct   = rnd([1,2,3,4,5]);
+  var rid    = loct+'.'+loct+'.'+loct+'.'+loct;
+  var n2oct  = rnd([11,22,33,44]); var net2=n2oct+'.'+n2oct+'.'+n2oct+'.'+n2oct;
+  var n3oct  = rnd([111,100,200]); var net3=n3oct+'.'+n3oct+'.'+n3oct+'.'+n3oct;
+  var neigh1 = '209.165.200.'+rnd([225,226,229]);
+  var neigh2 = '209.165.200.'+rnd([228,230,233]);
+  return {
+    cat:'eBGP', sub:'A', devs:['R1'],
+    taskIntro:'eBGP is configured on R2 and R3. Configure R1 to complete these tasks.',
+    tasks:[
+      '<b>Task 1:</b> Using the address-family command, configure eBGP according to the topology. Use Loopback0 for the router-id.',
+      '<b>Task 2:</b> Advertise R1\'s Loopback 0, 1, and 2 networks to AS <span class="hl">'+as2+'</span> and AS <span class="hl">'+as3+'</span>.'
+    ],
+    vars:{localAs,as2,as3,rid,net2,net3,neigh1IP:neigh1,neigh2IP:neigh2},
+    showRun:{
+      R1:['!','hostname R1','!',
+          'interface Loopback0',' ip address '+rid+' 255.255.255.255','!',
+          'interface Loopback1',' ip address '+net2+' 255.255.255.255','!',
+          'interface Loopback2',' ip address '+net3+' 255.255.255.255','!',
+          'interface Ethernet0/0',' ip address 209.165.200.226 255.255.255.252','!',
+          'interface Ethernet0/1',' ip address 209.165.200.230 255.255.255.252','!',
+          'end']
+    },
+    showIpIntBrief:{
+      R1:['Interface              IP-Address      OK? Method Status   Protocol',
+          'Loopback0              '+rid+'         YES manual up      up',
+          'Loopback1              '+net2+'        YES manual up      up',
+          'Loopback2              '+net3+'       YES manual up      up',
+          'Ethernet0/0            209.165.200.226   YES manual up      up',
+          'Ethernet0/1            209.165.200.230   YES manual up      up']
+    },
+    topoRows:[
+      {dev:'R1 (AS '+localAs+')', iface:'Lo0', ip:rid+'/32'},
+      {dev:'R1', iface:'Lo1', ip:net2+'/32'},
+      {dev:'R1', iface:'Lo2', ip:net3+'/32'},
+      {dev:'R2 (AS '+as2+')', iface:'neighbor', ip:neigh1},
+      {dev:'R3 (AS '+as3+')', iface:'neighbor', ip:neigh2}
+    ],
+    topoType:'bgp',
+    checks:[
+      {l:'router bgp '+localAs, ok:function(sc){return sc.bgpProc;}},
+      {l:'bgp router-id '+rid, ok:function(sc){return sc.bgpRid;}},
+      {l:'neighbor '+neigh1+' remote-as '+as2, ok:function(sc){return sc.bgpNeigh;}},
+      {l:'address-family ipv4 + neighbor activate', ok:function(sc){return sc.bgpAf;}},
+      {l:'network Lo0/Lo1/Lo2 /32 (3개)', ok:function(sc){return sc.bgpNetCnt>=3;}}
+    ],
+    solution:{
+      R1:['R1>enable','R1#configure terminal',
+          'R1(config)#router bgp '+localAs,
+          'R1(config-router)#bgp router-id '+rid,
+          'R1(config-router)#neighbor '+neigh1+' remote-as '+as2,
+          'R1(config-router)#neighbor '+neigh2+' remote-as '+as3,
+          'R1(config-router)#address-family ipv4',
+          'R1(config-router-af)#neighbor '+neigh1+' activate',
+          'R1(config-router-af)#neighbor '+neigh2+' activate',
+          'R1(config-router-af)#network '+rid+' mask 255.255.255.255',
+          'R1(config-router-af)#network '+net2+' mask 255.255.255.255',
+          'R1(config-router-af)#network '+net3+' mask 255.255.255.255',
+          'R1(config-router-af)#end','R1#write memory']
+    }
+  };
+}
+
+// ── EIGRP+CoPP ──
+// PDF Q15: R2(ACL 151 eigrp), R3(CoPP SSH 192.168.211.0/24 8000bps)
+function makeCoPP(){
+  var aclDev = rnd(['R2','R3']);
+  var coppDev= aclDev==='R2'?'R3':'R2';
+  var aclNum = rnd([120,150,151,160]);
+  var proto  = rnd(['eigrp','ospf']);
+  var coppProto= rnd(['SSH','Telnet','ICMP']);
+  var netBase= rnd(['192.168.210','192.168.211','192.168.213','192.168.24']);
+  var rate   = rnd([8000,9000,10000]);
+  var cmapName=coppProto;
+  var permitLine=coppProto==='SSH'?'permit tcp '+netBase+'.0 0.0.0.255 any eq 22':
+                 coppProto==='Telnet'?'permit tcp '+netBase+'.0 0.0.0.255 any eq telnet':
+                 'permit icmp '+netBase+'.0 0.0.0.255 any';
+  return {
+    cat:'EIGRP+CoPP', sub:'A', devs:[aclDev,coppDev],
+    taskIntro:'EIGRP is preconfigured on all routers. Configure '+aclDev+' and '+coppDev+' to complete these tasks.',
+    tasks:[
+      '<b>Task 1 ('+aclDev+'):</b> Modify the existing ACL on '+aclDev+' so that '+proto.toUpperCase()+' routes are received from R1 and R3.<ul style="margin-top:6px;line-height:2;padding-left:20px;"><li>The modification should only allow '+proto.toUpperCase()+' routes to pass.</li><li>Do not remove any configuration from '+aclDev+' to achieve this task.</li></ul>',
+      '<b>Task 2 ('+coppDev+'):</b> Configure CoPP on '+coppDev+' to achieve these results:<ul style="margin-top:6px;line-height:2;padding-left:20px;"><li>Permit '+coppProto+' traffic from <span class="hl">'+netBase+'.0/24</span>.</li><li>Limit traffic to <span class="hl">'+rate+' bps</span>.</li><li>Discard additional packets.</li></ul>'
+    ],
+    vars:{aclDev,coppDev,aclNum,proto,coppProto,netBase,rate,cmapName,permitLine,spanDst:null,vlanTrunk:null,vlanPC1:null,vlanPC2:null},
+    showRun:{
+      [aclDev]:['!','hostname '+aclDev,'!',
+                'ip access-list extended '+aclNum,' 10 permit ip any any',
+                '! ← 5 permit '+proto+' any any 추가 필요 (삭제 금지)','!',
+                'router eigrp 1',' network 0.0.0.0','!','end'],
+      [coppDev]:['!','hostname '+coppDev,'!',
+                 'router eigrp 1',' network 0.0.0.0','!',
+                 '! CoPP not yet configured','!','end']
+    },
+    showIpIntBrief:{
+      [aclDev]:['Interface              IP-Address      OK? Method Status   Protocol',
+                'Ethernet0/0            192.168.213.2   YES manual up      up'],
+      [coppDev]:['Interface              IP-Address      OK? Method Status   Protocol',
+                 'Ethernet0/0            192.168.213.3   YES manual up      up']
+    },
+    showACL:{
+      [aclDev]:'Extended IP access list '+aclNum+'\n    10 permit ip any any'
+    },
+    topoRows:[
+      {dev:aclDev,  iface:'e0/0', ip:'192.168.213.2/24 — Task1: ACL 수정'},
+      {dev:coppDev, iface:'e0/0', ip:'192.168.213.3/24 — Task2: CoPP 설정'}
+    ],
+    topoType:'copp',
+    checks:[
+      {l:aclDev+': ACL '+aclNum+' → 5 permit '+proto+' any any 추가', ok:function(sc){return sc.aclDone;}},
+      {l:coppDev+': ip access-list extended '+cmapName, ok:function(sc){return sc.coppAcl;}},
+      {l:coppDev+': class-map match-any '+cmapName, ok:function(sc){return sc.cmapDone;}},
+      {l:coppDev+': police '+rate+' transmit/drop', ok:function(sc){return sc.policeDone;}},
+      {l:coppDev+': service-policy input COPP', ok:function(sc){return sc.cpDone;}}
+    ],
+    solution:{
+      [aclDev]:[
+        aclDev+'>enable',aclDev+'#configure terminal',
+        aclDev+'(config)#ip access-list extended '+aclNum,
+        aclDev+'(config-ext-nacl)#5 permit '+proto+' any any',
+        aclDev+'(config-ext-nacl)#end',aclDev+'#write memory'],
+      [coppDev]:[
+        coppDev+'>enable',coppDev+'#configure terminal',
+        coppDev+'(config)#ip access-list extended '+cmapName,
+        coppDev+'(config-ext-nacl)#'+permitLine,
+        coppDev+'(config-ext-nacl)#exit',
+        coppDev+'(config)#class-map match-any '+cmapName,
+        coppDev+'(config-cmap)#match access-group name '+cmapName,
+        coppDev+'(config-cmap)#exit',
+        coppDev+'(config)#policy-map COPP',
+        coppDev+'(config-pmap)#class '+cmapName,
+        coppDev+'(config-pmap-c)#police '+rate+' conform-action transmit exceed-action drop',
+        coppDev+'(config-pmap-c)#control-plane',
+        coppDev+'(config-cp)#service-policy input COPP',
+        coppDev+'(config-cp)#end',coppDev+'#write memory']
+    }
+  };
+}
+
+
+
+// ════════════════════════════════════════════════════════
+// PDF 원본 문제 (숫자 그대로)
+// ════════════════════════════════════════════════════════
+function nfBase(expName,monName,slaOp){
+  return {
+    showRunR1:function(r1ip,swV10){
+      return ['!','hostname R1','!',
+        'interface Ethernet0/0',' ip address '+r1ip+' 255.255.255.0','!',
+        'flow exporter '+expName,' ! ← NOT YET CONFIGURED','!',
+        'flow monitor '+monName,' exporter '+expName,' cache timeout active 60',' record netflow ipv4 original-input','!',
+        'ip sla '+slaOp,' ! ← NOT YET SCHEDULED','!',
+        'ip route 0.0.0.0 0.0.0.0 '+swV10,'!','end'];
+    },
+    showRunSw1:function(sw1Lo){
+      return ['!','hostname Sw1','!',
+        'interface Loopback0',' ip address '+sw1Lo+' 255.255.255.255','!',
+        'interface Vlan10',' ip address 10.10.1.1 255.255.255.0',' no shutdown','!',
+        'interface Vlan12',' ip address 10.12.1.1 255.255.255.0',' no shutdown','!',
+        'interface Vlan14',' ip address 10.14.1.1 255.255.255.0',' no shutdown','!',
+        'interface Ethernet0/0',' switchport trunk encapsulation dot1q',' switchport mode trunk','!',
+        'interface Ethernet0/1',' switchport access vlan 12',' switchport mode access','! ← PC1 연결 포트 (VLAN 12)','!',
+        'interface Ethernet0/2',' switchport access vlan 14',' switchport mode access','! ← PC2 연결 포트 (VLAN 14)','!',
+        'ip routing','!','end'];
+    }
+  };
+}
+
+var NF_TOPO_ROWS=[
+  {dev:'R1',iface:'e0/0',ip:'10.10.1.2'},
+  {dev:'Sw1',iface:'VLAN 10',ip:'10.10.1.1'},
+  {dev:'Sw1',iface:'VLAN 12',ip:'10.12.1.1'},
+  {dev:'Sw1',iface:'VLAN 14',ip:'10.14.1.1'},
+  {dev:'PC1',iface:'VLAN 12',ip:'10.12.1.2'},
+  {dev:'PC2',iface:'VLAN 14',ip:'10.14.1.2'}
+];
+
+// Q1: UDP 2055, session 11, dest E1/1, SLA op 100, Export-NetFlowENCOR
+function makeQ1(){
+  var b=nfBase('Export-NetFlowENCOR','Monitor-FlowR1',100);
+  return {
+    cat:'NetFlow/SPAN/SLA',sub:'A',devs:['R1','Sw1'],
+    taskIntro:'The Operations team started configuring several monitoring activities. Complete the configurations for the tasks below.',
+    tasks:[
+      'Complete the Flexible NetFlow '+h('Flow Exporter')+' configuration on R1 to send data to the collector using '+h('UDP port 2055')+'.',
+      'Configure the switch port analyzer on Sw1 and mirror all communication to and from PC1 to interface '+h('E1/1')+' using session number '+h('11')+'.',
+      'Schedule the pre-configured IP SLA operation on R1 to start running <b>immediately</b> and to run <b>indefinitely</b>.'
+    ],
+    vars:{udp:2055,sess:11,slaOp:100,expName:'Export-NetFlowENCOR',monName:'Monitor-FlowR1',spanDst:'e1/1',vlanTrunk:10,vlanPC1:12,vlanPC2:14,r1ip:'10.10.1.2',swV10:'10.10.1.1',sw1Lo:'2.2.2.2',pc1ip:'10.12.1.2',pc2ip:'10.14.1.2'},
+    showRun:{R1:b.showRunR1('10.10.1.2','10.10.1.1'),Sw1:b.showRunSw1('2.2.2.2')},
+    showIpIntBrief:{R1:['Interface              IP-Address      OK? Method Status   Protocol','Ethernet0/0            10.10.1.2       YES manual up      up'],Sw1:['Interface              IP-Address      OK? Method Status   Protocol','Loopback0              2.2.2.2         YES manual up      up','Vlan10                 10.10.1.1       YES manual up      up']},
+    topoRows:NF_TOPO_ROWS,topoType:'netflow',
+    checks:[
+      {l:'R1: flow exporter Export-NetFlowENCOR → transport udp 2055',ok:function(sc){return sc.nfDone;}},
+      {l:'Sw1: monitor session 11 source interface e0/1 both',ok:function(sc){return sc.spanSrc;}},
+      {l:'Sw1: monitor session 11 destination interface e1/1',ok:function(sc){return sc.spanDst;}},
+      {l:'R1: ip sla schedule 100 life forever start-time now',ok:function(sc){return sc.slaDone;}}
+    ],
+    solution:{
+      R1:['R1>enable','R1#configure terminal','R1(config)#flow exporter Export-NetFlowENCOR','R1(config-flow-exporter)#transport udp 2055','R1(config-flow-exporter)#exit','R1(config)#ip sla schedule 100 life forever start-time now','R1(config)#end','R1#write memory'],
+      Sw1:['Sw1>enable','Sw1#configure terminal','Sw1(config)#monitor session 11 source interface e0/1 both','Sw1(config)#monitor session 11 destination interface e1/1','Sw1(config)#end','Sw1#write memory']
+    }
+  };
+}
+
+// Q2: dest 10.10.1.10, session 2, dst E1/0, HTTP GET http://10.10.1.100 freq 600, SLA op 10
+function makeQ2(){
+  var b=nfBase('Export-NetFlowENCOR','Monitor-FlowR1',10);
+  return {
+    cat:'NetFlow/SPAN/SLA',sub:'B',devs:['R1','Sw1'],
+    taskIntro:'The Operations team started configuring several monitoring activities. Complete the configurations for the tasks below.',
+    tasks:[
+      'Complete the Flexible NetFlow '+h('Flow Exporter')+' configuration on R1 to send data to the collector located at '+h('10.10.1.10')+'.',
+      'Configure the switch port analyzer on Sw1 and mirror all communication to and from PC1 and PC2 to interface '+h('E1/0')+' using session number '+h('2')+'.',
+      'Configure a basic IP SLA '+h('HTTP GET')+' operation on R1 to monitor the server at '+h('http://10.10.1.100')+' every '+h('600 seconds')+'.'
+    ],
+    vars:{destIP:'10.10.1.10',freq:600,sess:2,slaOp:10,expName:'Export-NetFlowENCOR',monName:'Monitor-FlowR1',spanDst:'e1/0',vlanTrunk:10,vlanPC1:12,vlanPC2:14,r1ip:'10.10.1.2',swV10:'10.10.1.1',sw1Lo:'2.2.2.2',pc1ip:'10.12.1.2',pc2ip:'10.14.1.2'},
+    showRun:{R1:b.showRunR1('10.10.1.2','10.10.1.1'),Sw1:b.showRunSw1('2.2.2.2')},
+    showIpIntBrief:{R1:['Interface              IP-Address      OK? Method Status   Protocol','Ethernet0/0            10.10.1.2       YES manual up      up'],Sw1:['Interface              IP-Address      OK? Method Status   Protocol','Loopback0              2.2.2.2         YES manual up      up','Vlan10                 10.10.1.1       YES manual up      up']},
+    topoRows:NF_TOPO_ROWS,topoType:'netflow',
+    checks:[
+      {l:'R1: flow exporter → destination 10.10.1.10',ok:function(sc){return sc.nfDone;}},
+      {l:'Sw1: session 2 source e0/1,e0/2 both',ok:function(sc){return sc.spanSrc;}},
+      {l:'Sw1: session 2 destination e1/0',ok:function(sc){return sc.spanDst;}},
+      {l:'R1: http get http://10.10.1.100 freq 600 + scheduled',ok:function(sc){return sc.slaDone;}}
+    ],
+    solution:{
+      R1:['R1>enable','R1#configure terminal','R1(config)#flow exporter Export-NetFlowENCOR','R1(config-flow-exporter)#destination 10.10.1.10','R1(config-flow-exporter)#exit','R1(config)#ip sla 10','R1(config-ip-sla)#http get http://10.10.1.100','R1(config-ip-sla-http)#frequency 600','R1(config-ip-sla-http)#exit','R1(config)#ip sla schedule 10 life forever start-time now','R1(config)#end','R1#write memory'],
+      Sw1:['Sw1>enable','Sw1#configure terminal','Sw1(config)#monitor session 2 source interface e0/1,e0/2 both','Sw1(config)#monitor session 2 destination interface e1/0','Sw1(config)#end','Sw1#write memory']
+    }
+  };
+}
+
+// Q3: flow monitor, sess 10, VLAN 10 src, dst e0/3, ICMP 2.2.2.2 freq 300, SLA op 10
+function makeQ3(){
+  var b=nfBase('Export-NetFlowENCOR','Monitor-FlowR1',10);
+  return {
+    cat:'NetFlow/SPAN/SLA',sub:'C',devs:['R1','Sw1'],
+    taskIntro:'The Operations team started configuring several monitoring activities. Complete the configurations for the tasks below.',
+    tasks:[
+      'Enable Flexible NetFlow on R1 E0/0 in <b>both directions</b> using the pre-configured flow monitor.',
+      'Configure the switch port analyzer on Sw1 and mirror all VLAN '+h('10')+' traffic to interface '+h('E0/3')+' using session number '+h('10')+'.',
+      'Configure a basic IP SLA '+h('ICMP echo')+' operation on R1 to ping Sw1\'s Loopback interface every '+h('300 seconds')+'. Then schedule it to start immediately and run indefinitely.'
+    ],
+    vars:{sess:10,slaOp:10,dst:'e0/3',freq:300,monName:'Monitor-FlowR1',sw1Lo:'2.2.2.2',spanDst:'e0/3',vlanTrunk:10,vlanPC1:12,vlanPC2:14,r1ip:'10.10.1.2',swV10:'10.10.1.1',pc1ip:'10.12.1.2',pc2ip:'10.14.1.2'},
+    showRun:{R1:b.showRunR1('10.10.1.2','10.10.1.1'),Sw1:b.showRunSw1('2.2.2.2')},
+    showIpIntBrief:{R1:['Interface              IP-Address      OK? Method Status   Protocol','Ethernet0/0            10.10.1.2       YES manual up      up'],Sw1:['Interface              IP-Address      OK? Method Status   Protocol','Loopback0              2.2.2.2         YES manual up      up','Vlan10                 10.10.1.1       YES manual up      up']},
+    topoRows:NF_TOPO_ROWS,topoType:'netflow',
+    checks:[
+      {l:'R1: ip flow monitor Monitor-FlowR1 input (E0/0)',ok:function(sc){return sc.nfIn;}},
+      {l:'R1: ip flow monitor Monitor-FlowR1 output (E0/0)',ok:function(sc){return sc.nfOut;}},
+      {l:'Sw1: session 10 source vlan 10 both',ok:function(sc){return sc.spanSrc;}},
+      {l:'Sw1: session 10 destination e0/3',ok:function(sc){return sc.spanDst;}},
+      {l:'R1: icmp-echo 2.2.2.2 freq 300 + scheduled',ok:function(sc){return sc.slaDone;}}
+    ],
+    solution:{
+      R1:['R1>enable','R1#configure terminal','R1(config)#ip sla 10','R1(config-ip-sla)#icmp-echo 2.2.2.2','R1(config-ip-sla)#frequency 300','R1(config-ip-sla)#exit','R1(config)#ip sla schedule 10 life forever start-time now','R1(config)#interface Ethernet0/0','R1(config-if)#ip flow monitor Monitor-FlowR1 input','R1(config-if)#ip flow monitor Monitor-FlowR1 output','R1(config-if)#end','R1#write memory'],
+      Sw1:['Sw1>enable','Sw1#configure terminal','Sw1(config)#monitor session 10 source vlan 10 both','Sw1(config)#monitor session 10 destination interface e0/3','Sw1(config)#end','Sw1#write memory']
+    }
+  };
+}
+
+// Q4: dest 10.10.1.110, HTTP GET http://10.10.1.100 freq 300, SPAN sess 7 src e0/0 dst e1/1, SLA op 10
+function makeQ4(){
+  var b=nfBase('Export-NetFlowENCOR','Monitor-FlowR1',10);
+  return {
+    cat:'NetFlow/SPAN/SLA',sub:'B',devs:['R1','Sw1'],
+    taskIntro:'The Operations team started configuring several monitoring activities. Complete the configurations for the tasks below.',
+    tasks:[
+      'Complete the Flexible NetFlow '+h('Flow Exporter')+' configuration on R1 to send data to the collector located at '+h('10.10.1.110')+'.',
+      'Configure a basic IP SLA '+h('HTTP GET')+' operation on R1 to monitor the server at '+h('http://10.10.1.100')+' every '+h('300 seconds')+'.',
+      'Configure the switch port analyzer on Sw1 using these settings:'
+    ],
+    bullets:'<ul style="list-style:disc;padding-left:22px;margin-top:6px;line-height:2;"><li>Session number '+h('7')+'</li><li>Mirror all traffic on '+h('E0/0')+'</li><li>Direct the output to interface '+h('E1/1')+'</li></ul>',
+    vars:{destIP:'10.10.1.110',freq:300,sess:7,slaOp:10,spanSrc:'e0/0',spanDst:'e1/1',expName:'Export-NetFlowENCOR',monName:'Monitor-FlowR1',vlanTrunk:10,vlanPC1:12,vlanPC2:14,r1ip:'10.10.1.2',swV10:'10.10.1.1',sw1Lo:'2.2.2.2',pc1ip:'10.12.1.2',pc2ip:'10.14.1.2'},
+    showRun:{R1:b.showRunR1('10.10.1.2','10.10.1.1'),Sw1:b.showRunSw1('2.2.2.2')},
+    showIpIntBrief:{R1:['Interface              IP-Address      OK? Method Status   Protocol','Ethernet0/0            10.10.1.2       YES manual up      up'],Sw1:['Interface              IP-Address      OK? Method Status   Protocol','Loopback0              2.2.2.2         YES manual up      up']},
+    topoRows:NF_TOPO_ROWS,topoType:'netflow',
+    checks:[
+      {l:'R1: flow exporter → destination 10.10.1.110',ok:function(sc){return sc.nfDone;}},
+      {l:'R1: http get http://10.10.1.100 freq 300 + scheduled',ok:function(sc){return sc.slaDone;}},
+      {l:'Sw1: session 7 source e0/0 both',ok:function(sc){return sc.spanSrc;}},
+      {l:'Sw1: session 7 destination e1/1',ok:function(sc){return sc.spanDst;}}
+    ],
+    solution:{
+      R1:['R1>enable','R1#configure terminal','R1(config)#flow exporter Export-NetFlowENCOR','R1(config-flow-exporter)#destination 10.10.1.110','R1(config-flow-exporter)#exit','R1(config)#ip sla 10','R1(config-ip-sla)#http get http://10.10.1.100','R1(config-ip-sla-http)#frequency 300','R1(config-ip-sla-http)#exit','R1(config)#ip sla schedule 10 life forever start-time now','R1(config)#end','R1#write memory'],
+      Sw1:['Sw1>enable','Sw1#configure terminal','Sw1(config)#monitor session 7 source interface e0/0 both','Sw1(config)#monitor session 7 destination interface e1/1','Sw1(config)#end','Sw1#write memory']
+    }
+  };
+}
+
+// Q5: flow monitor Monitor-FlowR1, ICMP 5.5.5.5 freq 60, SPAN sess 5 src e0/2 dst e1/0, SLA op 10
+function makeQ5(){
+  var b=nfBase('Export-NetFlowENCOR','Monitor-FlowR1',10);
+  return {
+    cat:'NetFlow/SPAN/SLA',sub:'D',devs:['R1','Sw1'],
+    taskIntro:'The Operations team started configuring several monitoring activities. Complete the configurations for the tasks below.',
+    tasks:[
+      'Enable Flexible NetFlow on R1 E0/0 in <b>both directions</b> using the pre-configured flow monitor.',
+      'Configure a basic IP SLA '+h('ICMP echo')+' operation on R1 to ping Sw1\'s Loopback interface every '+h('60 seconds')+'. Then schedule it to start immediately and run indefinitely.',
+      'Configure the switch port analyzer on Sw1 using these settings:'
+    ],
+    bullets:'<ul style="list-style:disc;padding-left:22px;margin-top:6px;line-height:2;"><li>Session number '+h('5')+'</li><li>Mirror all traffic on '+h('E0/2')+'</li><li>Direct output to interface '+h('E1/0')+'</li></ul>',
+    vars:{spanSrc:'e0/2',spanDst:'e1/0',sess:5,slaOp:10,freq:60,monName:'Monitor-FlowR1',sw1Lo:'5.5.5.5',vlanTrunk:10,vlanPC1:12,vlanPC2:14,r1ip:'10.10.1.2',swV10:'10.10.1.1',pc1ip:'10.12.1.2',pc2ip:'10.14.1.2'},
+    showRun:{
+      R1:['!','hostname R1','!','interface Ethernet0/0',' ip address 10.10.1.2 255.255.255.0',' ! ip flow monitor ← NOT YET CONFIGURED','!','flow monitor Monitor-FlowR1',' cache timeout active 60',' record netflow ipv4 original-input','!','ip sla 10',' ! ← NOT YET SCHEDULED','!','ip route 0.0.0.0 0.0.0.0 10.10.1.1','!','end'],
+      Sw1:b.showRunSw1('5.5.5.5')
+    },
+    showIpIntBrief:{R1:['Interface              IP-Address      OK? Method Status   Protocol','Ethernet0/0            10.10.1.2       YES manual up      up'],Sw1:['Interface              IP-Address      OK? Method Status   Protocol','Loopback0              5.5.5.5         YES manual up      up']},
+    topoRows:NF_TOPO_ROWS,topoType:'netflow',
+    checks:[
+      {l:'R1: ip flow monitor Monitor-FlowR1 input+output',ok:function(sc){return sc.nfIn&&sc.nfOut;}},
+      {l:'R1: icmp-echo 5.5.5.5 freq 60 + scheduled',ok:function(sc){return sc.slaDone;}},
+      {l:'Sw1: session 5 source e0/2 both',ok:function(sc){return sc.spanSrc;}},
+      {l:'Sw1: session 5 destination e1/0',ok:function(sc){return sc.spanDst;}}
+    ],
+    solution:{
+      R1:['R1>enable','R1#configure terminal','R1(config)#ip sla 10','R1(config-ip-sla)#icmp-echo 5.5.5.5','R1(config-ip-sla)#frequency 60','R1(config-ip-sla)#exit','R1(config)#ip sla schedule 10 life forever start-time now','R1(config)#interface Ethernet0/0','R1(config-if)#ip flow monitor Monitor-FlowR1 input','R1(config-if)#ip flow monitor Monitor-FlowR1 output','R1(config-if)#end','R1#write memory'],
+      Sw1:['Sw1>enable','Sw1#configure terminal','Sw1(config)#monitor session 5 source interface e0/2 both','Sw1(config)#monitor session 5 destination interface e1/0','Sw1(config)#end','Sw1#write memory']
+    }
+  };
+}
+
+// Q6: flow monitor Monitor-R1Flow, ICMP PC1(10.12.1.2) freq 300, SPAN sess 12 VLAN 12 dst e1/3, SLA op 10
+function makeQ6(){
+  var b=nfBase('Export-NetFlowENCOR','Monitor-R1Flow',10);
+  return {
+    cat:'NetFlow/SPAN/SLA',sub:'C',devs:['R1','Sw1'],
+    taskIntro:'The Operations team started configuring several monitoring activities. Complete the configurations for the tasks below.',
+    tasks:[
+      'Enable Flexible NetFlow on R1 E0/0 in <b>both directions</b> using the pre-configured flow monitor.',
+      'Configure the switch port analyzer on Sw1 and mirror all VLAN '+h('12')+' traffic to interface '+h('E1/3')+' using session number '+h('12')+'.',
+      'Configure a basic IP SLA '+h('ICMP echo')+' operation on R1 to ping PC1 every '+h('300 seconds')+'. Then schedule it to start immediately and run indefinitely.'
+    ],
+    vars:{sess:12,slaOp:10,dst:'e1/3',freq:300,monName:'Monitor-R1Flow',sw1Lo:'2.2.2.2',spanDst:'e1/3',vlanSrc:12,vlanTrunk:10,vlanPC1:12,vlanPC2:14,r1ip:'10.10.1.2',swV10:'10.10.1.1',pc1ip:'10.12.1.2',pc2ip:'10.14.1.2'},
+    showRun:{
+      R1:['!','hostname R1','!','interface Ethernet0/0',' ip address 10.10.1.2 255.255.255.0',' ! ip flow monitor ← NOT YET CONFIGURED','!','flow monitor Monitor-R1Flow',' cache timeout active 60',' record netflow ipv4 original-input','!','ip sla 10',' ! ← NOT YET SCHEDULED','!','ip route 0.0.0.0 0.0.0.0 10.10.1.1','!','end'],
+      Sw1:b.showRunSw1('2.2.2.2')
+    },
+    showIpIntBrief:{R1:['Interface              IP-Address      OK? Method Status   Protocol','Ethernet0/0            10.10.1.2       YES manual up      up'],Sw1:['Interface              IP-Address      OK? Method Status   Protocol','Loopback0              2.2.2.2         YES manual up      up','Vlan12                 10.12.1.1       YES manual up      up']},
+    topoRows:NF_TOPO_ROWS,topoType:'netflow',
+    checks:[
+      {l:'R1: ip flow monitor Monitor-R1Flow input+output',ok:function(sc){return sc.nfIn&&sc.nfOut;}},
+      {l:'Sw1: session 12 source vlan 12 both',ok:function(sc){return sc.spanSrc;}},
+      {l:'Sw1: session 12 destination e1/3',ok:function(sc){return sc.spanDst;}},
+      {l:'R1: icmp-echo 10.12.1.2 freq 300 + scheduled',ok:function(sc){return sc.slaDone;}}
+    ],
+    solution:{
+      R1:['R1>enable','R1#configure terminal','R1(config)#ip sla 10','R1(config-ip-sla)#icmp-echo 10.12.1.2','R1(config-ip-sla)#frequency 300','R1(config-ip-sla)#exit','R1(config)#ip sla schedule 10 life forever start-time now','R1(config)#interface Ethernet0/0','R1(config-if)#ip flow monitor Monitor-R1Flow input','R1(config-if)#ip flow monitor Monitor-R1Flow output','R1(config-if)#end','R1#write memory'],
+      Sw1:['Sw1>enable','Sw1#configure terminal','Sw1(config)#monitor session 12 source vlan 12 both','Sw1(config)#monitor session 12 destination interface e1/3','Sw1(config)#end','Sw1#write memory']
+    }
+  };
+}
+
+// Q7: R20, pid 20, lo0, rid 10.0.1.20, Area 40, /18 (255.255.192.0)
+function makeQ7(){
+  return {
+    cat:'OSPF',sub:'A',devs:['R20'],
+    taskIntro:'OSPF is preconfigured on all devices except R20. Configure R20 to complete these tasks.',
+    tasks:[
+      '<b>Task 1:</b> Configure OSPF according to the topology using these requirements:<ul style="margin-top:6px;line-height:2;padding-left:20px;"><li>Use Process ID '+h('20')+'.</li><li>Use Loopback0 for the Router ID.</li><li>Advertise all networks into OSPF.</li><li>Do <b>not</b> use network statements under the OSPF process to accomplish this task.</li></ul>',
+      '<b>Task 2:</b> Configure a /18 summary route for Area '+h('40')+'.'
+    ],
+    vars:{pid:20,loopNum:0,loopIP:'10.0.1.20',stub:40,summNet:'10.40.0.0',summMask:'255.255.192.0',devName:'R20'},
+    showRun:{R20:['!','hostname R20','!','interface Loopback0',' ip address 10.0.1.20 255.255.255.255','!','interface Ethernet0/0',' ip address 10.10.20.1 255.255.255.0','!','interface Ethernet0/1',' ip address 10.20.30.1 255.255.255.0','!','interface Ethernet0/2',' ip address 10.40.50.1 255.255.255.0','!','ip routing','!','end']},
+    showIpIntBrief:{R20:['Interface              IP-Address      OK? Method Status   Protocol','Loopback0              10.0.1.20       YES manual up      up','Ethernet0/0            10.10.20.1      YES manual up      up','Ethernet0/1            10.20.30.1      YES manual up      up','Ethernet0/2            10.40.50.1      YES manual up      up']},
+    topoRows:null,topoType:'ospf',
+    checks:[
+      {l:'router ospf 20',ok:function(sc){return sc.ospfProc;}},
+      {l:'router-id 10.0.1.20',ok:function(sc){return sc.ospfRid;}},
+      {l:'ip ospf 20 area 0 (lo0, e0/0, e0/1)',ok:function(sc){return sc.ospfIface;}},
+      {l:'ip ospf 20 area 40 (e0/2)',ok:function(sc){return sc.ospfStub;}},
+      {l:'area 40 range 10.40.0.0 255.255.192.0',ok:function(sc){return sc.ospfRange;}}
+    ],
+    solution:{R20:['R20>enable','R20#configure terminal','R20(config)#router ospf 20','R20(config-router)#router-id 10.0.1.20','R20(config-router)#area 40 range 10.40.0.0 255.255.192.0','R20(config-router)#exit','R20(config)#interface range loopback0,Ethernet0/0-1','R20(config-if-range)#ip ospf 20 area 0','R20(config-if-range)#interface Ethernet0/2','R20(config-if)#ip ospf 20 area 40','R20(config-if)#end','R20#write memory']}
+  };
+}
+
+// Q8: R30, pid 10, lo0, rid 10.0.1.30, Area 50, /17 (255.255.128.0)
+function makeQ8(){
+  return {
+    cat:'OSPF',sub:'A',devs:['R30'],
+    taskIntro:'OSPF is preconfigured on all devices except R30. Configure R30 to complete these tasks.',
+    tasks:[
+      '<b>Task 1:</b> Configure OSPF according to the topology using these requirements:<ul style="margin-top:6px;line-height:2;padding-left:20px;"><li>Use Process ID '+h('10')+'.</li><li>Use Loopback0 for the Router ID.</li><li>Advertise all networks into OSPF.</li><li>Do <b>not</b> use network statements under the OSPF process to accomplish this task.</li></ul>',
+      '<b>Task 2:</b> Configure a /17 summary route for Area '+h('50')+'.'
+    ],
+    vars:{pid:10,loopNum:0,loopIP:'10.0.1.30',stub:50,summNet:'10.50.0.0',summMask:'255.255.128.0',devName:'R30'},
+    showRun:{R30:['!','hostname R30','!','interface Loopback0',' ip address 10.0.1.30 255.255.255.255','!','interface Ethernet0/0',' ip address 10.10.30.1 255.255.255.0','!','interface Ethernet0/1',' ip address 10.20.30.2 255.255.255.0','!','interface Ethernet0/2',' ip address 10.50.40.1 255.255.255.0','!','ip routing','!','end']},
+    showIpIntBrief:{R30:['Interface              IP-Address      OK? Method Status   Protocol','Loopback0              10.0.1.30       YES manual up      up','Ethernet0/0            10.10.30.1      YES manual up      up','Ethernet0/1            10.20.30.2      YES manual up      up','Ethernet0/2            10.50.40.1      YES manual up      up']},
+    topoRows:null,topoType:'ospf',
+    checks:[
+      {l:'router ospf 10',ok:function(sc){return sc.ospfProc;}},
+      {l:'router-id 10.0.1.30',ok:function(sc){return sc.ospfRid;}},
+      {l:'ip ospf 10 area 0 (lo0, e0/0, e0/1)',ok:function(sc){return sc.ospfIface;}},
+      {l:'ip ospf 10 area 50 (e0/2)',ok:function(sc){return sc.ospfStub;}},
+      {l:'area 50 range 10.50.0.0 255.255.128.0',ok:function(sc){return sc.ospfRange;}}
+    ],
+    solution:{R30:['R30>enable','R30#configure terminal','R30(config)#router ospf 10','R30(config-router)#router-id 10.0.1.30','R30(config-router)#area 50 range 10.50.0.0 255.255.128.0','R30(config-router)#exit','R30(config)#interface range loopback0,Ethernet0/0-1','R30(config-if-range)#ip ospf 10 area 0','R30(config-if-range)#interface Ethernet0/2','R30(config-if)#ip ospf 10 area 50','R30(config-if)#end','R30#write memory']}
+  };
+}
+
+// Q9: R11, Finance, Tunnel10, dest 209.165.201.6
+function makeQ9(){
+  return {
+    cat:'VRF+Tunnel',sub:'A',devs:['R11'],
+    taskIntro:'A colleague started configuring a new network. All configurations on R22 are complete. Complete the configurations on R11 for the tasks below.',
+    tasks:[
+      '<b>Task 1:</b> Extend the '+h('Finance')+' VRF between R11 and R22 using '+h('Tunnel 10')+'.',
+      '<b>Task 2:</b> Complete the Finance VRF configuration on R11 and configure static routing so that traffic between VLAN 111 and VLAN 222 uses Tunnel 10 exclusively.<br><small style="color:#8b949e;display:block;margin-top:4px;">Note: Sw11 can be used to validate traffic flow.</small>'
+    ],
+    vars:{vrf:'Finance',tunNum:10,target:'R11',other:'R22',ispIPme:'209.165.200.228',ispIPother:'209.165.201.6',ispGW:'209.165.200.225',e01me:'10.11.11.1',e01other:'10.11.11.2',tunMe:'10.10.10.1',tunOther:'10.10.10.2'},
+    showRun:{R11:['!','hostname R11','!','vrf definition Finance',' address-family ipv4','  exit-address-family','!','interface Ethernet0/0',' ip address 209.165.200.228 255.255.255.252','!','interface Ethernet0/1',' ! ip vrf forwarding Finance ← NOT YET CONFIGURED','!','interface Tunnel10',' ! ip vrf forwarding Finance ← NOT YET CONFIGURED','!','ip route 0.0.0.0 0.0.0.0 209.165.200.225','!','end']},
+    showIpIntBrief:{R11:['Interface              IP-Address      OK? Method Status   Protocol','Ethernet0/0            209.165.200.228   YES manual up      up','Ethernet0/1            unassigned        YES unset  admin down  down','Tunnel10               unassigned        YES unset  down      down']},
+    topoRows:[{dev:'R11',iface:'e0/0 (ISP)',ip:'209.165.200.228/30'},{dev:'R22',iface:'e0/0 (ISP)',ip:'209.165.201.6/30 ← tunnel destination'},{dev:'Tunnel10',iface:'R11',ip:'10.10.10.1/30'},{dev:'Sw11',iface:'VLAN 111',ip:'10.10.111.0/24 (Finance VRF)'},{dev:'Sw22',iface:'VLAN 222',ip:'10.10.222.0/24 (Finance VRF)'}],
+    topoType:'vrf',
+    checks:[
+      {l:'R11 e0/1: ip vrf forwarding Finance',ok:function(sc){return sc.vrfIface;}},
+      {l:'R11 Tunnel10: ip vrf forwarding Finance',ok:function(sc){return sc.tunVrf;}},
+      {l:'R11 Tunnel10: source e0/0 + destination 209.165.201.6',ok:function(sc){return sc.tunSrcDst;}},
+      {l:'R11: ip route vrf Finance (×2)',ok:function(sc){return sc.vrfRoute>=2;}}
+    ],
+    solution:{R11:['R11>enable','R11#configure terminal','R11(config)#interface Ethernet0/1','R11(config-if)#ip vrf forwarding Finance','R11(config-if)#ip address 10.11.11.1 255.255.255.252','R11(config-if)#no shutdown','R11(config-if)#exit','R11(config)#interface Tunnel10','R11(config-if)#ip vrf forwarding Finance','R11(config-if)#ip address 10.10.10.1 255.255.255.252','R11(config-if)#tunnel source Ethernet0/0','R11(config-if)#tunnel destination 209.165.201.6','R11(config-if)#no shutdown','R11(config-if)#exit','R11(config)#ip route vrf Finance 10.10.111.0 255.255.255.0 10.11.11.2','R11(config)#ip route vrf Finance 10.10.222.0 255.255.255.0 10.10.10.2','R11(config)#end','R11#write memory']}
+  };
+}
+
+// Q10: R22, Finance, Tunnel10, dest 209.165.200.230
+function makeQ10(){
+  return {
+    cat:'VRF+Tunnel',sub:'A',devs:['R22'],
+    taskIntro:'A colleague started configuring a new network. All configurations on R11 are complete. Complete the configurations on R22 for the tasks below.',
+    tasks:[
+      '<b>Task 1:</b> Extend the '+h('Finance')+' VRF between R11 and R22 using '+h('Tunnel 10')+'.',
+      '<b>Task 2:</b> Complete the Finance VRF configuration on R22 and configure static routing so that traffic between VLAN 111 and VLAN 222 uses Tunnel 10 exclusively.<br><small style="color:#8b949e;display:block;margin-top:4px;">Note: Sw22 can be used to validate traffic flow.</small>'
+    ],
+    vars:{vrf:'Finance',tunNum:10,target:'R22',other:'R11',ispIPme:'209.165.201.2',ispIPother:'209.165.200.230',ispGW:'209.165.201.1',e01me:'10.22.22.1',e01other:'10.22.22.2',tunMe:'10.10.10.2',tunOther:'10.10.10.1'},
+    showRun:{R22:['!','hostname R22','!','vrf definition Finance',' address-family ipv4','  exit-address-family','!','interface Ethernet0/0',' ip address 209.165.201.2 255.255.255.252','!','interface Ethernet0/1',' ! ip vrf forwarding Finance ← NOT YET CONFIGURED','!','interface Tunnel10',' ! ip vrf forwarding Finance ← NOT YET CONFIGURED','!','ip route 0.0.0.0 0.0.0.0 209.165.201.1','!','end']},
+    showIpIntBrief:{R22:['Interface              IP-Address      OK? Method Status   Protocol','Ethernet0/0            209.165.201.2     YES manual up      up','Ethernet0/1            unassigned        YES unset  admin down  down','Tunnel10               unassigned        YES unset  down      down']},
+    topoRows:[{dev:'R22',iface:'e0/0 (ISP)',ip:'209.165.201.2/30'},{dev:'R11',iface:'e0/0 (ISP)',ip:'209.165.200.230/30 ← tunnel destination'},{dev:'Tunnel10',iface:'R22',ip:'10.10.10.2/30'},{dev:'Sw11',iface:'VLAN 111',ip:'10.10.111.0/24 (Finance VRF)'},{dev:'Sw22',iface:'VLAN 222',ip:'10.10.222.0/24 (Finance VRF)'}],
+    topoType:'vrf',
+    checks:[
+      {l:'R22 e0/1: ip vrf forwarding Finance',ok:function(sc){return sc.vrfIface;}},
+      {l:'R22 Tunnel10: ip vrf forwarding Finance',ok:function(sc){return sc.tunVrf;}},
+      {l:'R22 Tunnel10: source e0/0 + destination 209.165.200.230',ok:function(sc){return sc.tunSrcDst;}},
+      {l:'R22: ip route vrf Finance (×2)',ok:function(sc){return sc.vrfRoute>=2;}}
+    ],
+    solution:{R22:['R22>enable','R22#configure terminal','R22(config)#interface Ethernet0/1','R22(config-if)#ip vrf forwarding Finance','R22(config-if)#ip address 10.22.22.1 255.255.255.252','R22(config-if)#no shutdown','R22(config-if)#exit','R22(config)#interface Tunnel10','R22(config-if)#ip vrf forwarding Finance','R22(config-if)#ip address 10.10.10.2 255.255.255.252','R22(config-if)#tunnel source Ethernet0/0','R22(config-if)#tunnel destination 209.165.200.230','R22(config-if)#no shutdown','R22(config-if)#exit','R22(config)#ip route vrf Finance 10.10.111.0 255.255.255.0 10.22.22.2','R22(config)#ip route vrf Finance 10.10.222.0 255.255.255.0 10.10.10.1','R22(config)#end','R22#write memory']}
+  };
+}
+
+// Q11: Sw10, Po10, old Po11, Ethernet0/0-2, VLAN 10,20
+function makeQ11(){
+  return {
+    cat:'EtherChannel+STP',sub:'A',devs:['Sw10'],
+    taskIntro:'Complete the tasks below by making changes to Sw10 only. No access is provided to Sw20 or Sw30.',
+    tasks:[
+      '<b>Task 1:</b> Sw20 is actively attempting to negotiate an 802.1Q trunking EtherChannel with Sw10 using LACP, but the channel is not functional. Resolve the issues on Sw10.',
+      '<b>Task 2:</b> Modify the spanning tree configuration to ensure that Sw10 is always the root for VLAN '+h('10')+' and VLAN '+h('20')+'.'
+    ],
+    vars:{poNum:10,oldPo:11,ifRange:'Ethernet0/0-2',vlans:'10,20',spanDst:null,vlanTrunk:null,vlanPC1:null,vlanPC2:null},
+    showRun:{Sw10:['!','hostname Sw10','!','! ▼ 현재 잘못된 설정 (mode on = LACP 미지원)','interface Port-channel11',' switchport trunk encapsulation dot1q',' switchport mode trunk','!','interface Ethernet0/0',' switchport trunk encapsulation dot1q',' switchport mode trunk',' channel-group 11 mode on','!','interface Ethernet0/1',' switchport trunk encapsulation dot1q',' switchport mode trunk',' channel-group 11 mode on','!','interface Ethernet0/2',' switchport trunk encapsulation dot1q',' switchport mode trunk',' channel-group 11 mode on','!','spanning-tree mode pvst','!','end']},
+    showIpIntBrief:{Sw10:['Interface              IP-Address      OK? Method Status   Protocol','Port-channel11         unassigned        YES unset  up      up','Ethernet0/0            unassigned        YES unset  up      up']},
+    topoRows:null,topoType:'etherchannel',
+    checks:[
+      {l:'no interface Port-channel11',ok:function(sc){return sc.noOldPo;}},
+      {l:'Ethernet0/0-2 channel-group 10 mode active',ok:function(sc){return sc.lacp;}},
+      {l:'Port-channel10 trunk',ok:function(sc){return sc.poTrunk;}},
+      {l:'spanning-tree vlan 10,20 priority 0',ok:function(sc){return sc.stpRoot;}}
+    ],
+    solution:{Sw10:['Sw10>enable','Sw10#configure terminal','Sw10(config)#no interface Port-channel11','Sw10(config)#interface range Ethernet0/0-2','Sw10(config-if-range)#switchport trunk encapsulation dot1q','Sw10(config-if-range)#switchport mode trunk','Sw10(config-if-range)#channel-group 10 mode active','Sw10(config-if-range)#no shutdown','Sw10(config-if-range)#exit','Sw10(config)#interface Port-channel10','Sw10(config-if)#switchport trunk encapsulation dot1q','Sw10(config-if)#switchport mode trunk','Sw10(config-if)#no shutdown','Sw10(config-if)#exit','Sw10(config)#spanning-tree vlan 10,20 priority 0','Sw10(config)#end','Sw10#write memory']}
+  };
+}
+
+// Q13: R2, AS65200, Lo0=2.2.2.2, Lo1=22.22.22.22, Lo2=222.222.222.222
+//      neighbor R1=209.165.200.225(AS65100), R3=209.165.200.229(AS65300)
+function makeQ13(){
+  return {
+    cat:'eBGP',sub:'A',devs:['R2'],
+    taskIntro:'eBGP is configured on R1 and R3. Configure R2 to complete these tasks.',
+    tasks:[
+      '<b>Task 1:</b> Using the address-family command, configure eBGP according to the topology. Use Loopback0 for the router-id.',
+      '<b>Task 2:</b> Advertise R2\'s Loopback 0, 1, and 2 networks to AS '+h('65100')+' and AS '+h('65300')+'.'
+    ],
+    vars:{localAs:65200,as2:65100,as3:65300,rid:'2.2.2.2',net2:'22.22.22.22',net3:'222.222.222.222',neigh1IP:'209.165.200.225',neigh2IP:'209.165.200.229'},
+    showRun:{R2:['!','hostname R2','!','interface Loopback0',' ip address 2.2.2.2 255.255.255.255','!','interface Loopback1',' ip address 22.22.22.22 255.255.255.255','!','interface Loopback2',' ip address 222.222.222.222 255.255.255.255','!','interface Ethernet0/0',' ip address 209.165.200.226 255.255.255.252','!','interface Ethernet0/1',' ip address 209.165.200.230 255.255.255.252','!','end']},
+    showIpIntBrief:{R2:['Interface              IP-Address      OK? Method Status   Protocol','Loopback0              2.2.2.2           YES manual up      up','Loopback1              22.22.22.22       YES manual up      up','Loopback2              222.222.222.222   YES manual up      up','Ethernet0/0            209.165.200.226   YES manual up      up','Ethernet0/1            209.165.200.230   YES manual up      up']},
+    topoRows:[{dev:'R2 (AS 65200)',iface:'Lo0',ip:'2.2.2.2/32'},{dev:'R2',iface:'Lo1',ip:'22.22.22.22/32'},{dev:'R2',iface:'Lo2',ip:'222.222.222.222/32'},{dev:'R1 (AS 65100)',iface:'neighbor',ip:'209.165.200.225'},{dev:'R3 (AS 65300)',iface:'neighbor',ip:'209.165.200.229'}],
+    topoType:'bgp',
+    checks:[
+      {l:'router bgp 65200',ok:function(sc){return sc.bgpProc;}},
+      {l:'bgp router-id 2.2.2.2',ok:function(sc){return sc.bgpRid;}},
+      {l:'neighbor 209.165.200.225 remote-as 65100',ok:function(sc){return sc.bgpNeigh;}},
+      {l:'address-family ipv4 + activate',ok:function(sc){return sc.bgpAf;}},
+      {l:'network 2.2.2.2, 22.22.22.22, 222.222.222.222 /32',ok:function(sc){return sc.bgpNetCnt>=3;}}
+    ],
+    solution:{R2:['R2>enable','R2#configure terminal','R2(config)#router bgp 65200','R2(config-router)#bgp router-id 2.2.2.2','R2(config-router)#neighbor 209.165.200.225 remote-as 65100','R2(config-router)#neighbor 209.165.200.229 remote-as 65300','R2(config-router)#address-family ipv4','R2(config-router-af)#neighbor 209.165.200.225 activate','R2(config-router-af)#neighbor 209.165.200.229 activate','R2(config-router-af)#network 2.2.2.2 mask 255.255.255.255','R2(config-router-af)#network 22.22.22.22 mask 255.255.255.255','R2(config-router-af)#network 222.222.222.222 mask 255.255.255.255','R2(config-router-af)#end','R2#write memory']}
+  };
+}
+
+// Q15: R2(ACL 151 eigrp), R3(CoPP SSH 192.168.211.0/24 8000bps)
+function makeQ15(){
+  return {
+    cat:'EIGRP+CoPP',sub:'A',devs:['R2','R3'],
+    taskIntro:'EIGRP is preconfigured on all routers. Configure R2 and R3 to complete these tasks.',
+    tasks:[
+      '<b>Task 1 (R2):</b> Modify the existing ACL on R2 so that EIGRP routes are received from R1 and R3.<ul style="margin-top:6px;line-height:2;padding-left:20px;"><li>The modification should only allow EIGRP routes to pass.</li><li>Do not remove any configuration from R2 to achieve this task.</li></ul>',
+      '<b>Task 2 (R3):</b> Configure CoPP on R3 to achieve these results:<ul style="margin-top:6px;line-height:2;padding-left:20px;"><li>Permit SSH traffic from '+h('192.168.211.0/24')+'.</li><li>Limit traffic to '+h('8,000 bps')+'.</li><li>Discard additional packets.</li></ul>'
+    ],
+    vars:{aclDev:'R2',coppDev:'R3',aclNum:151,proto:'eigrp',coppProto:'SSH',netBase:'192.168.211',rate:8000,cmapName:'SSH',permitLine:'permit tcp 192.168.211.0 0.0.0.255 any eq 22',spanDst:null,vlanTrunk:null,vlanPC1:null,vlanPC2:null},
+    showRun:{
+      R2:['!','hostname R2','!','ip access-list extended 151',' 10 permit ip any any','! ← 5 permit eigrp any any 추가 필요 (삭제 금지)','!','router eigrp 1',' network 0.0.0.0','!','end'],
+      R3:['!','hostname R3','!','router eigrp 1',' network 0.0.0.0','!','! CoPP not yet configured','!','end']
+    },
+    showIpIntBrief:{
+      R2:['Interface              IP-Address      OK? Method Status   Protocol','Ethernet0/0            192.168.213.2   YES manual up      up'],
+      R3:['Interface              IP-Address      OK? Method Status   Protocol','Ethernet0/0            192.168.213.3   YES manual up      up']
+    },
+    showACL:{R2:'Extended IP access list 151\n    10 permit ip any any'},
+    topoRows:[{dev:'R2',iface:'e0/0',ip:'192.168.213.2/24 — Task1: ACL 수정'},{dev:'R3',iface:'e0/0',ip:'192.168.213.3/24 — Task2: CoPP 설정'}],
+    topoType:'copp',
+    checks:[
+      {l:'R2: ACL 151 → 5 permit eigrp any any 추가',ok:function(sc){return sc.aclDone;}},
+      {l:'R3: ip access-list extended SSH',ok:function(sc){return sc.coppAcl;}},
+      {l:'R3: class-map match-any SSH',ok:function(sc){return sc.cmapDone;}},
+      {l:'R3: police 8000 transmit/drop',ok:function(sc){return sc.policeDone;}},
+      {l:'R3: service-policy input COPP',ok:function(sc){return sc.cpDone;}}
+    ],
+    solution:{
+      R2:['R2>enable','R2#configure terminal','R2(config)#ip access-list extended 151','R2(config-ext-nacl)#5 permit eigrp any any','R2(config-ext-nacl)#end','R2#write memory'],
+      R3:['R3>enable','R3#configure terminal','R3(config)#ip access-list extended SSH','R3(config-ext-nacl)#permit tcp 192.168.211.0 0.0.0.255 any eq 22','R3(config-ext-nacl)#exit','R3(config)#class-map match-any SSH','R3(config-cmap)#match access-group name SSH','R3(config-cmap)#exit','R3(config)#policy-map COPP','R3(config-pmap)#class SSH','R3(config-pmap-c)#police 8000 conform-action transmit exceed-action drop','R3(config-pmap-c)#control-plane','R3(config-cp)#service-policy input COPP','R3(config-cp)#end','R3#write memory']
+    }
+  };
+}
+
+
+function buildPool(){
+  POOL=[];
+  // PDF 원본 문제 (숫자 그대로)
+  POOL.push(makeQ1());   // Q1: UDP 2055, sess 11, dst e1/1
+  POOL.push(makeQ2());   // Q2: dest 10.10.1.10, HTTP GET freq 600
+  POOL.push(makeQ3());   // Q3: flow monitor, VLAN10, dst e0/3, ICMP freq 300
+  POOL.push(makeQ4());   // Q4: dest 10.10.1.110, HTTP GET freq 300, SPAN sess 7
+  POOL.push(makeQ5());   // Q5: flow monitor, ICMP 5.5.5.5 freq 60, SPAN sess 5
+  POOL.push(makeQ6());   // Q6: flow monitor, ICMP PC1 freq 300, SPAN VLAN12
+  POOL.push(makeQ7());   // Q7: OSPF R20 pid20 Area40 /18
+  POOL.push(makeQ8());   // Q8: OSPF R30 pid10 Area50 /17
+  POOL.push(makeQ9());   // Q9: VRF R11 Tunnel10 dst 209.165.201.6
+  POOL.push(makeQ10());  // Q10: VRF R22 Tunnel10 dst 209.165.200.230
+  POOL.push(makeQ11());  // Q11: EC Po10 old Po11 VLAN 10,20
+  POOL.push(makeQ13());  // Q13: eBGP AS65200 R2
+  POOL.push(makeQ15());  // Q15: CoPP R2(ACL151) R3(SSH 8000bps)
+  // 숫자만 바꾼 변형 문제
+  [makeNF_A,makeNF_B,makeNF_C,makeNF_D].forEach(function(f){for(var i=0;i<4;i++)POOL.push(f());});
+  [makeOSPF_A,makeOSPF_B].forEach(function(f){for(var i=0;i<3;i++)POOL.push(f());});
+  [makeVRF,makeEC,makeBGP,makeCoPP].forEach(function(f){for(var i=0;i<2;i++)POOL.push(f());});
+  // 셔플
+  for(var i=POOL.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=POOL[i];POOL[i]=POOL[j];POOL[j]=t;}
+  POOL_IDX=0;
+}
+
+
+
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+var CQ=null,SC={},qcount=0,curDev='',devStates={},devHists={},histIdx=0,acIdx=-1;
+
+function newQ(){
+  if(!POOL.length||POOL_IDX>=POOL.length){buildPool();}
+  CQ=POOL[POOL_IDX++];
+  SC=initSC();qcount++;
+  document.getElementById('catlabel').textContent=CQ.cat;
+  document.getElementById('qnum').textContent='문제 #'+qcount;
+  document.getElementById('taskIntro').textContent=CQ.taskIntro||'';
+  var html='';CQ.tasks.forEach(function(t){html+='<li style="margin-bottom:10px;">'+t+'</li>';});
+  document.getElementById('tasklist').innerHTML=html;
+  document.getElementById('bullets').innerHTML=CQ.bullets||'';
+  buildDevTabs();buildTopo();doReset();
+}
+
+function initSC(){
+  var c=CQ.cat;
+  if(c==='NetFlow/SPAN/SLA') return {nfDone:false,nfIn:false,nfOut:false,slaDone:false,spanSrc:false,spanDst:false,icmpOk:false,freqOk:false,httpOk:false};
+  if(c==='OSPF') return {ospfProc:false,ospfRid:false,ospfIface:false,ospfStub:false,ospfRange:false,ospfNet:false,ospfNetStub:false};
+  if(c==='VRF+Tunnel') return {vrfIface:false,tunVrf:false,tunSrcDst:false,tunSrc:false,tunDst:false,vrfRoute:false,vrfRouteCnt:0};
+  if(c==='EtherChannel+STP') return {noOldPo:false,lacp:false,poTrunk:false,stpRoot:false};
+  if(c==='eBGP') return {bgpProc:false,bgpRid:false,bgpNeigh:false,bgpAf:false,bgpNet:false,bgpNetCnt:0};
+  if(c==='EIGRP+CoPP') return {aclDone:false,coppAcl:false,cmapDone:false,pmapDone:false,policeDone:false,cpDone:false};
+  return {};
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TOPOLOGY
+// ═══════════════════════════════════════════════════════════════
+function buildTopo(){
+  var v=CQ.vars, type=CQ.topoType;
+  var box=document.getElementById('topoContent');
+  box.innerHTML='';
+  var ns='http://www.w3.org/2000/svg';
+
+  function mkSVG(w,h){
+    var s=document.createElementNS(ns,'svg');
+    s.setAttribute('viewBox','0 0 '+w+' '+h);
+    s.setAttribute('width','100%');
+    s.style.display='block';
+    s.style.maxHeight='300px';
+    return s;
+  }
+  function E(tag,a){
+    var e=document.createElementNS(ns,tag);
+    if(a) Object.keys(a).forEach(function(k){e.setAttribute(k,a[k]);});
+    return e;
+  }
+  // 텍스트 헬퍼
+  function T(x,y,txt,fill,fs,anc){
+    var t=E('text',{x:x,y:y,'text-anchor':anc||'middle','font-size':fs||10,
+      fill:fill||'#c9d1d9','font-family':'Arial,sans-serif'});
+    t.textContent=String(txt); return t;
+  }
+  // 선
+  function L(x1,y1,x2,y2,clr,dash){
+    return E('line',{x1:x1,y1:y1,x2:x2,y2:y2,stroke:clr||'#6e7681',
+      'stroke-width':1.5,'stroke-dasharray':dash||'0'});
+  }
+  // 라우터 아이콘 (원, 이름은 아래 별도 텍스트)
+  function R(cx,cy,name,fc,sc){
+    var g=E('g');
+    g.appendChild(E('circle',{cx:cx,cy:cy,r:16,fill:fc||'#1a3a1a',stroke:sc||'#3fb950','stroke-width':2}));
+    var t=E('text',{x:cx,y:cy+4,'text-anchor':'middle','font-size':8,'font-weight':'bold',
+      fill:'#fff','font-family':'Arial,sans-serif'});
+    t.textContent=name.length<=3?name:name.slice(0,3); g.appendChild(t);
+    var lb=E('text',{x:cx,y:cy+28,'text-anchor':'middle','font-size':9,
+      fill:sc||'#3fb950','font-family':'Arial,sans-serif'});
+    lb.textContent=name; g.appendChild(lb);
+    return g;
+  }
+  // 스위치 아이콘 (사각형)
+  function SW(cx,cy,name){
+    var g=E('g');
+    g.appendChild(E('rect',{x:cx-20,y:cy-12,width:40,height:24,rx:3,
+      fill:'#0d2140',stroke:'#4a9eff','stroke-width':2}));
+    var t=E('text',{x:cx,y:cy+4,'text-anchor':'middle','font-size':7,'font-weight':'bold',
+      fill:'#79c0ff','font-family':'Arial,sans-serif'});
+    t.textContent=name; g.appendChild(t);
+    var lb=E('text',{x:cx,y:cy+26,'text-anchor':'middle','font-size':9,
+      fill:'#4a9eff','font-family':'Arial,sans-serif'});
+    lb.textContent=name; g.appendChild(lb);
+    return g;
+  }
+  // PC 아이콘
+  function PC(cx,cy,name){
+    var g=E('g');
+    g.appendChild(E('rect',{x:cx-14,y:cy-10,width:28,height:18,rx:2,
+      fill:'#21262d',stroke:'#555','stroke-width':1.5}));
+    g.appendChild(E('rect',{x:cx-7,y:cy+8,width:14,height:4,rx:1,fill:'#555'}));
+    var lb=E('text',{x:cx,y:cy+26,'text-anchor':'middle','font-size':9,
+      fill:'#8b949e','font-family':'Arial,sans-serif'});
+    lb.textContent=name; g.appendChild(lb);
+    return g;
+  }
+
+  var svg=null;
+
+  // ── NetFlow/SPAN/SLA (Q1~Q6 정확한 레이아웃) ──
+  // PDF 토폴로지: R1(좌상) -- VLAN10 -- Sw1(우상)
+  //               Sw1 e0/1 -- VLAN12 -- PC1(좌하)
+  //               Sw1 e0/2 -- VLAN14 -- PC2(우하)
+  if(type==='netflow'){
+    var vT=v.vlanM||v.vlanTrunk||10;
+    var vP1=v.vlanP1||v.vlanPC1||12;
+    var vP2=v.vlanP2||v.vlanPC2||14;
+    svg=mkSVG(380,240);
+    // 선 먼저 (노드 뒤에 깔리게)
+    svg.appendChild(L(72,65,265,50));      // R1-Sw1 (VLAN10 트렁크)
+    svg.appendChild(L(252,65,155,185));    // Sw1-PC1 (VLAN P1)
+    svg.appendChild(L(280,65,300,185));    // Sw1-PC2 (VLAN P2)
+    // 노드
+    svg.appendChild(R(52,65,'R1','#0d2d0d','#3fb950'));
+    svg.appendChild(SW(285,50,'Sw1'));
+    svg.appendChild(PC(140,198,'PC1'));
+    svg.appendChild(PC(305,198,'PC2'));
+    // 인터페이스 레이블 (선 중간 근처, 겹치지 않는 빈 공간)
+    svg.appendChild(T(163,42,'e0/0','#6e7681',8));
+    svg.appendChild(T(163,52,'VLAN '+vT,'#4a9eff',8));
+    svg.appendChild(T(186,140,'e0/1  VLAN '+vP1,'#e3b341',8));
+    svg.appendChild(T(320,128,'e0/2','#8b949e',8));
+    svg.appendChild(T(320,138,'VLAN '+vP2,'#8b949e',8));
+    // SPAN destination 배너 (상단)
+    if(v.spanDst){
+      svg.appendChild(E('rect',{x:2,y:2,width:140,height:16,rx:2,fill:'#1c0808',stroke:'#6e2020','stroke-width':1}));
+      svg.appendChild(T(71,13,'SPAN dst: '+v.spanDst,'#f85149',8));
+    }
+    // 하단 힌트
+    svg.appendChild(T(190,230,'Sw1 show run → e0/1=PC1(VLAN '+vP1+')  e0/2=PC2(VLAN '+vP2+')','#6e7681',8));
+
+  // ── OSPF (Q7~Q8 정확한 레이아웃) ──
+  // PDF: R10(위중앙) - R20(좌하) - R30(우하) 삼각형
+  //      10.10.20.0/24 (R10-R20), 10.10.30.0/24 (R10-R30), 10.20.30.0/24 (R20-R30)
+  //      R20 e0/2 → Area40 → R40
+  //      R30 e0/2 → Area50 → R50
+  } else if(type==='ospf'){
+    var dN=v.devName||'R20', stub=v.stub||40;
+    var isR20=dN==='R20', isR30=dN==='R30';
+    svg=mkSVG(380,280);
+    // Area 0 원
+    svg.appendChild(E('ellipse',{cx:190,cy:118,rx:108,ry:78,fill:'none',
+      stroke:'#1a3a6b','stroke-width':1.2,'stroke-dasharray':'5,3'}));
+    svg.appendChild(T(190,52,'Area 0','#4a9eff',11));
+    // 삼각형 연결선
+    svg.appendChild(L(190,60,110,158));
+    svg.appendChild(L(190,60,270,158));
+    svg.appendChild(L(110,158,270,158));
+    // 서브넷 레이블 (선 중간)
+    svg.appendChild(T(136,100,'10.10.20.0/24','#555',7));
+    svg.appendChild(T(245,100,'10.10.30.0/24','#555',7));
+    svg.appendChild(T(190,168,'10.20.30.0/24','#555',7));
+    // Area 연결선 (stub)
+    svg.appendChild(L(110,174,55,238,'#555','4,3'));
+    svg.appendChild(L(270,174,325,238,'#555','4,3'));
+    // 라우터 노드
+    svg.appendChild(R(190,60,'R10','#1c1c1c','#555'));
+    svg.appendChild(R(110,158,isR20?dN:'R20',isR20?'#0d2140':'#1c1c1c',isR20?'#4a9eff':'#555'));
+    svg.appendChild(R(270,158,isR30?dN:'R30',isR30?'#0d2140':'#1c1c1c',isR30?'#4a9eff':'#555'));
+    svg.appendChild(R(55,242,'R40','#181818','#444'));
+    svg.appendChild(R(325,242,'R50','#181818','#444'));
+    // Area 레이블
+    svg.appendChild(T(55,232,'Area '+(stub===40||stub==='40'?40:50),'#e3b341',8));
+    svg.appendChild(T(325,232,'Area '+(stub===50||stub==='50'?50:40),'#e3b341',8));
+    // e0/2 레이블
+    svg.appendChild(T(70,206,'e0/2','#e3b341',8));
+    svg.appendChild(T(315,206,'e0/2','#e3b341',8));
+    // 설정 대상 표시
+    svg.appendChild(T(190,272,dN+' = 설정 대상','#4a9eff',9));
+
+  // ── VRF+Tunnel (Q9~Q10 정확한 레이아웃) ──
+  // PDF: ISP(위) - R11(좌하) - R22(우하)
+  //      209.165.200.228/30 (ISP-R11), 209.165.201.0/30 (ISP-R22)
+  //      Tunnel10: 10.10.10.0/30 점선
+  //      R11 e0/1 → 10.11.11.0/30 → Sw11(VLAN111 Finance)
+  //      R22 e0/1 → 10.22.22.0/30 → Sw22(VLAN222 Finance)
+  } else if(type==='vrf'){
+    var lMe=v.target==='R11'?'R11':'R22';
+    var lOther=v.target==='R11'?'R22':'R11';
+    var ipMe=v.ispIPme||'209.165.200.226';
+    var ipOther=v.ispIPother||'209.165.201.6';
+    var tunN=v.tunNum||10;
+    svg=mkSVG(380,280);
+    // ISP-R11, ISP-R22 연결선
+    svg.appendChild(L(190,42,82,148));
+    svg.appendChild(L(190,42,298,148));
+    // ISP 링크 서브넷 레이블 (선 바깥)
+    svg.appendChild(T(116,84,ipMe.split('.').slice(0,3).join('.')+'.x/30','#555',7));
+    svg.appendChild(T(264,84,ipOther.split('.').slice(0,3).join('.')+'.x/30','#555',7));
+    // Tunnel 점선
+    svg.appendChild(L(100,155,280,155,'#4a9eff','7,4'));
+    // Tunnel 레이블 (점선 위)
+    svg.appendChild(T(190,148,'Tunnel '+tunN+' (10.10.10.0/30)','#4a9eff',8));
+    // R11-Sw11, R22-Sw22 연결
+    svg.appendChild(L(80,164,80,210));
+    svg.appendChild(L(300,164,300,210));
+    // 노드
+    svg.appendChild(R(190,38,'ISP','#1c1c1c','#555'));
+    svg.appendChild(R(80,152,lMe,'#0d2140','#4a9eff'));
+    svg.appendChild(R(300,152,lOther,'#1c1c1c','#555'));
+    svg.appendChild(SW(80,224,'Sw11'));
+    svg.appendChild(SW(300,224,'Sw22'));
+    // VLAN/VRF 레이블 (스위치 아래)
+    svg.appendChild(T(80,252,'VLAN 111','#3fb950',8));
+    svg.appendChild(T(80,262,v.vrf+' VRF','#3fb950',7));
+    svg.appendChild(T(300,252,'VLAN 222','#3fb950',8));
+    svg.appendChild(T(300,262,v.vrf+' VRF','#3fb950',7));
+    // e0/0, e0/1 레이블
+    svg.appendChild(T(58,140,'e0/0','#6e7681',8));
+    svg.appendChild(T(322,140,'e0/0','#6e7681',8));
+    svg.appendChild(T(58,175,'e0/1','#6e7681',8));
+    svg.appendChild(T(322,175,'e0/1','#6e7681',8));
+    // tunnel dest 힌트
+    svg.appendChild(T(190,275,'tunnel dest = '+lOther+' ISP: '+ipOther,'#e3b341',8));
+
+  // ── EtherChannel+STP (Q11 정확한 레이아웃) ──
+  // PDF: Sw10(위중앙) - Sw20(아래중앙) 이중선 Po10
+  //      Sw10 - Sw30(좌하) 단일선
+  //      기존 오류: Port-channel11 mode on
+  } else if(type==='etherchannel'){
+    svg=mkSVG(380,260);
+    // 경고 배너
+    svg.appendChild(E('rect',{x:2,y:2,width:376,height:17,rx:2,fill:'#200a0a',stroke:'#6e1515','stroke-width':1}));
+    svg.appendChild(T(190,13,'⚠  현재: Po'+(v.oldPo||'11')+' mode on → LACP 협상 불가  ⚠','#f85149',8));
+    // 연결선
+    svg.appendChild(L(179,82,179,172));   // Po 이중선 1
+    svg.appendChild(L(192,82,192,172));   // Po 이중선 2
+    svg.appendChild(L(165,80,92,168));    // Sw10-Sw30
+    // 노드
+    svg.appendChild(SW(185,68,'Sw10'));
+    svg.appendChild(SW(75,182,'Sw30'));
+    svg.appendChild(SW(185,182,'Sw20'));
+    // Po 레이블 (이중선 오른쪽)
+    svg.appendChild(T(250,110,'Po'+(v.poNum||'10'),'#e3b341',13));
+    svg.appendChild(T(250,126,'('+( v.ifRange||'e0/0-2')+')','#c9d1d9',8));
+    svg.appendChild(T(250,140,'mode active','#3fb950',9));
+    // STP
+    svg.appendChild(T(185,228,'spanning-tree vlan '+(v.vlans||'10,20')+' priority 0','#4a9eff',9));
+    svg.appendChild(T(185,242,'→ Sw10 = Root Bridge','#79c0ff',8));
+
+  // ── eBGP (Q13 정확한 레이아웃) ──
+  // PDF: AS65200(R2 위중앙) - AS65100(R1 좌하) - AS65300(R3 우하)
+  //      209.165.200.224/30 (R2-R1), 209.165.200.228/30 (R2-R3)
+  //      R1-R3: 209.165.202.128/30
+  } else if(type==='bgp'){
+    svg=mkSVG(380,230);
+    // AS 박스
+    svg.appendChild(E('rect',{x:130,y:8,width:120,height:68,rx:5,fill:'none',stroke:'#4a9eff','stroke-width':1.5}));
+    svg.appendChild(T(190,22,'AS '+(v.localAs||65200),'#4a9eff',10));
+    svg.appendChild(E('rect',{x:4,y:138,width:120,height:68,rx:5,fill:'none',stroke:'#555','stroke-width':1.2}));
+    svg.appendChild(T(64,152,'AS '+(v.as3||65100),'#8b949e',10));
+    svg.appendChild(E('rect',{x:256,y:138,width:120,height:68,rx:5,fill:'none',stroke:'#555','stroke-width':1.2}));
+    svg.appendChild(T(316,152,'AS '+(v.as2||65300),'#8b949e',10));
+    // 연결선
+    svg.appendChild(L(170,74,78,148));   // R2-R1 (e0/0)
+    svg.appendChild(L(210,74,302,148));  // R2-R3 (e0/1)
+    svg.appendChild(L(124,172,256,172)); // R1-R3
+    // 인터페이스 레이블
+    svg.appendChild(T(106,108,'e0/0','#555',7));
+    svg.appendChild(T(274,108,'e0/1','#555',7));
+    // 라우터
+    svg.appendChild(R(190,52,'R2','#0d1a40','#4a9eff'));
+    svg.appendChild(R(64,172,'R1','#1c1c1c','#555'));
+    svg.appendChild(R(316,172,'R3','#1c1c1c','#555'));
+    // Loopback 정보 (하단)
+    svg.appendChild(T(190,222,'show ip int brief → Lo0/Lo1/Lo2 IP 확인','#6e7681',8));
+
+  // ── EIGRP+CoPP (Q15 정확한 레이아웃) ──
+  // PDF: R3(위)-Sw1(중앙)-R2(좌하), R1(우하)-PC10(우하)
+  //      192.168.213.0/24 공유
+  } else if(type==='copp'){
+    svg=mkSVG(380,260);
+    // 연결선
+    svg.appendChild(L(190,46,190,112));   // R3(위)-Sw1
+    svg.appendChild(L(168,128,90,202));   // Sw1-R2
+    svg.appendChild(L(212,126,280,140));  // Sw1-R1
+    svg.appendChild(L(295,158,295,210));  // R1-PC10
+    // 노드
+    svg.appendChild(R(190,36,'R3','#1c1a00','#e3b341'));   // CoPP 설정 대상
+    svg.appendChild(SW(190,124,'Sw1'));
+    svg.appendChild(R(78,212,v.aclDev||'R2','#0d1a40','#4a9eff'));  // ACL 수정 대상
+    svg.appendChild(R(295,150,'R1','#1c1c1c','#555'));
+    svg.appendChild(PC(295,222,'PC10'));
+    // 서브넷 레이블
+    svg.appendChild(T(120,178,'192.168.213.2/24','#555',7));
+    svg.appendChild(T(264,132,'192.168.213.3/24','#555',7));
+    // 역할 레이블 (노드 옆)
+    svg.appendChild(T(190,22,'Task2: CoPP','#e3b341',8));
+    svg.appendChild(T(52,248,'Task1: ACL','#4a9eff',9));
+    // 힌트
+    svg.appendChild(T(190,252,'show access-lists → ACL번호 확인','#6e7681',8));
+  }
+
+  if(svg) box.appendChild(svg);
+
+  // 토폴로지 테이블 (NetFlow에만 표시)
+  if(CQ.topoRows&&CQ.topoRows.length){
+    var tbl=document.createElement('table');
+    tbl.className='topo-table'; tbl.style.marginTop='8px';
+    tbl.innerHTML='<thead><tr><th>Device</th><th>Interface</th><th>IP</th></tr></thead>';
+    var tb=document.createElement('tbody');
+    CQ.topoRows.forEach(function(r){
+      var tr=document.createElement('tr');
+      tr.innerHTML='<td>'+r.dev+'</td><td>'+r.iface+'</td><td>'+r.ip+'</td>';
+      tb.appendChild(tr);
+    });
+    tbl.appendChild(tb); box.appendChild(tbl);
+  }
+
+  // 힌트
+  var ht='';
+  if(type==='netflow') ht='💡 SPAN source: Sw1 <b>show run</b> → e0/1=VLAN '+(v.vlanP1||v.vlanPC1||12)+' = PC1 포트';
+  else if(type==='ospf') ht='💡 Router ID: <b>show run int lo'+(v.loopNum||0)+'</b> → Loopback'+(v.loopNum||0)+' IP 확인';
+  else if(type==='vrf') ht='💡 tunnel destination = '+(v.target==='R11'?'R22':'R11')+' ISP IP: '+(v.ispIPother||'');
+  else if(type==='etherchannel') ht='💡 <b>show run</b> → Po'+(v.oldPo||'11')+' mode on 확인 → 삭제 후 Po'+(v.poNum||'10')+' mode active';
+  else if(type==='bgp') ht='💡 <b>show ip int brief</b> → Loopback 0/1/2 IP 확인 후 network 명령어 사용';
+  else if(type==='copp') ht='💡 <b>show access-lists</b> on '+(v.aclDev||'R2')+' → ACL 번호 확인 후 수정';
+  if(ht){
+    var hd=document.createElement('div'); hd.className='topo-hint'; hd.innerHTML=ht; box.appendChild(hd);
+  }
+}
+
+function buildDevTabs(){
+  var devs=CQ.devs||CQ.devices||[];
+  curDev=devs[0];
+  devStates={}; devHists={};
+  devs.forEach(function(d){devStates[d]={mode:'user'};devHists[d]=[];});
+
+  var el=document.getElementById('devtabsEl'); el.innerHTML='';
+  devs.forEach(function(d){
+    var t=document.createElement('div');
+    t.className='dt'+(d===curDev?' on':'');
+    t.textContent=d; t.id='dt-'+d;
+    t.onclick=function(){switchDev(d);};
+    el.appendChild(t);
+  });
+  buildQuickBar();
+}
+
+function buildQuickBar(){
+  var qb=document.getElementById('quickbar'); qb.innerHTML='';
+  var cat=CQ.cat;
+  var btns=[];
+  if(cat==='NetFlow/SPAN/SLA') btns=['enable','configure terminal','show running-config','show ip interface brief','show flow monitor','flow exporter','transport udp','destination','ip sla','ip sla schedule','icmp-echo','frequency','http get','interface Ethernet0/0','ip flow monitor','monitor session','source interface','source vlan','destination interface','both','life forever start-time now','end','exit','write memory'];
+  else if(cat==='OSPF') btns=['enable','configure terminal','show running-config','show ip interface brief','show run int lo0','router ospf','router-id','area range','network','ip ospf','interface range','loopback0','Ethernet0/0-1','end','exit','write memory'];
+  else if(cat==='VRF+Tunnel') btns=['enable','configure terminal','show running-config','show ip interface brief','interface Ethernet0/1','interface Tunnel','ip vrf forwarding','ip address','tunnel source Ethernet0/0','tunnel destination','no shutdown','ip route vrf','end','exit','write memory'];
+  else if(cat==='EtherChannel+STP') btns=['enable','configure terminal','show running-config','no interface Port-channel','interface range','switchport trunk encapsulation dot1q','switchport mode trunk','channel-group','mode active','no shutdown','interface Port-channel','spanning-tree vlan','priority 0','end','exit','write memory'];
+  else if(cat==='eBGP') btns=['enable','configure terminal','show running-config','show ip interface brief','router bgp','bgp router-id','neighbor','remote-as','address-family ipv4','activate','network','mask 255.255.255.255','end','exit','write memory'];
+  else if(cat==='EIGRP+CoPP') btns=['enable','configure terminal','show running-config','show access-lists','ip access-list extended','5 permit eigrp any any','5 permit ospf any any','permit tcp','permit icmp','exit','class-map match-any','match access-group name','policy-map COPP','class','police','conform-action transmit exceed-action drop','control-plane','service-policy input COPP','end','write memory'];
+  btns.forEach(function(b){var btn=document.createElement('button');btn.className='qk';btn.textContent=b;btn.onclick=function(){appendInput(b);};qb.appendChild(btn);});
+}
+
+// ══════════════════════════════════════════════════════════════
+// TOPOLOGY SVG
+// ══════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════
+// TERMINAL STATE MACHINE
+// ══════════════════════════════════════════════════════════════
+function getMode(){return devStates[curDev]?devStates[curDev].mode||'user':'user';}
+function setMode(m){if(devStates[curDev])devStates[curDev].mode=m;}
+function getDS(){return devStates[curDev]||{};}
+
+function getPrompt(){
+  var m=getMode(),b=curDev;
+  var map={'user':b+'>','exec':b+'#','config':b+'(config)#','config-router':b+'(config-router)#','config-if':b+'(config-if)#','config-if-range':b+'(config-if-range)#','config-flow-exporter':b+'(config-flow-exporter)#','config-ip-sla':b+'(config-ip-sla)#','config-ip-sla-http':b+'(config-ip-sla-http)#','config-router-af':b+'(config-router-af)#','config-ext-nacl':b+'(config-ext-nacl)#','config-cmap':b+'(config-cmap)#','config-pmap':b+'(config-pmap)#','config-pmap-c':b+'(config-pmap-c)#','config-cp':b+'(config-cp)#','conf-keyring':b+'(conf-keyring)#'};
+  return map[m]||b+'>';
+}
+function updPrompt(){document.getElementById('plbl').textContent=getPrompt();}
+
+function tprint(txt,cls){
+  var o=document.getElementById('tout');
+  var d=document.createElement('div');if(cls)d.className=cls;
+  d.textContent=txt;o.appendChild(d);o.scrollTop=o.scrollHeight;
+}
+function unk(c){tprint('% Invalid input detected at "^" marker','c-err');tprint('% '+c,'c-err');}
+function norm(c){return c.trim().replace(/\s+/g,' ');}
+
+function runCmd(raw){
+  var cmd=norm(raw);if(!cmd)return;
+  tprint(getPrompt()+' '+cmd,'c-prompt');
+  var m=getMode(),cl=cmd.toLowerCase();
+  // universal commands
+  if(cl==='enable'||cl==='en'){if(m==='user'){setMode('exec');return;} }
+  if(cl==='configure terminal'||cl==='conf t'){if(m==='exec'){setMode('config');tprint('Enter configuration commands, one per line.  End with CNTL/Z.','c-info');return;}}
+  if(cl==='end'||cl==='^z'){if(m!=='user'){setMode('exec');tprint('%SYS-5-CONFIG_I: Configured from console by console','c-info');}return;}
+  if(cl==='exit'){ var pm={exec:'user',config:'exec','config-router':'config','config-if':'config','config-if-range':'config','config-flow-exporter':'config','config-ip-sla':'config','config-ip-sla-http':'config-ip-sla','config-router-af':'config-router','config-ext-nacl':'config','config-cmap':'config','config-pmap':'config','config-pmap-c':'config-pmap','config-cp':'config','conf-keyring':'config'};setMode(pm[m]||'user');return;}
+  if(cl==='wr'||cl==='write memory'||cl==='copy running-config startup-config'){tprint('Building configuration...[OK]','c-ok');return;}
+  if(m==='user'){unk(cmd);return;}
+  if(m==='exec'&&cl.startsWith('show ')){doShow(cmd,cl);return;}
+  // dispatch by category
+  var cat=CQ.cat;
+  if(cat==='NetFlow/SPAN/SLA') procSLA(cmd,cl,m);
+  else if(cat==='OSPF') procOSPF(cmd,cl,m);
+  else if(cat==='VRF+Tunnel') procVRF(cmd,cl,m);
+  else if(cat==='EtherChannel+STP') procEC(cmd,cl,m);
+  else if(cat==='eBGP') procBGP(cmd,cl,m);
+  else if(cat==='EIGRP+CoPP') procCoPP(cmd,cl,m);
+  else unk(cmd);
+  updPrompt();
+}
+
+// ── show commands ──
+function doShow(cmd,cl){
+  var v=CQ.vars, cat=CQ.cat;
+  var showLines = (CQ.showRun&&CQ.showRun[curDev])||[];
+  var briefLines = (CQ.showIpIntBrief&&CQ.showIpIntBrief[curDev])||[];
+
+  var isShowRun = cl==='show running-config' || cl==='show run' || cl==='show running' || cl.startsWith('show run') && !cl.includes('int');
+  if(isShowRun){
+    tprint('Building configuration...','c-info');tprint('','');
+    tprint('Current configuration:','c-info');tprint('!','c-info');
+    showLines.forEach(function(l){
+      if(l===undefined||l===null) return;
+      var cls='';
+      if(l.startsWith('!')) cls='c-info';
+      else if(l.includes('NOT YET')||l.includes('<--')||l.includes('NOT CONFIGURED')) cls='c-err';
+      else if(l.startsWith(' !')) cls='c-err';
+      tprint(l,cls);
+    });
+    // add what user has configured so far (green)
+    if(cat==='NetFlow/SPAN/SLA'){
+      if(SC.nfDone&&v.udp) tprint(' transport udp '+v.udp+' (✓ configured)','c-ok');
+      if(SC.nfDone&&v.destIP) tprint(' destination '+v.destIP+' (✓ configured)','c-ok');
+      if(SC.nfIn) tprint('! ip flow monitor '+v.monName+' input ✓','c-ok');
+      if(SC.nfOut) tprint('! ip flow monitor '+v.monName+' output ✓','c-ok');
+      if(SC.slaDone) tprint('ip sla schedule '+v.slaOp+' life forever start-time now ✓','c-ok');
+      if(SC.spanSrc) tprint('monitor session '+v.sess+' source ... ✓','c-ok');
+      if(SC.spanDst) tprint('monitor session '+v.sess+' destination ... ✓','c-ok');
+    } else if(cat==='OSPF'){
+      if(SC.ospfProc) tprint('router ospf '+v.pid+' ✓','c-ok');
+      if(SC.ospfRid) tprint(' router-id '+v.loopIP+' ✓','c-ok');
+      if(SC.ospfRange) tprint(' area '+v.stub+' range '+v.summNet+' '+v.summMask+' ✓','c-ok');
+      if(SC.ospfIface) tprint(' ip ospf '+v.pid+' area 0 (on interfaces) ✓','c-ok');
+      if(SC.ospfStub) tprint(' ip ospf '+v.pid+' area '+v.stub+' (Eth0/2) ✓','c-ok');
+    } else if(cat==='eBGP'){
+      if(SC.bgpProc) tprint('router bgp '+v.localAs+' ✓','c-ok');
+      if(SC.bgpRid) tprint(' bgp router-id '+v.rid+' ✓','c-ok');
+      if(SC.bgpNeigh) tprint(' neighbor '+v.neigh1+' remote-as '+v.as2+' ✓','c-ok');
+      if(SC.bgpNet) tprint(' network statements ✓','c-ok');
+    } else if(cat==='EtherChannel+STP'){
+      if(SC.noOldPo) tprint('! Port-channel'+v.oldPo+' removed ✓','c-ok');
+      if(SC.lacp) tprint('! channel-group '+v.poNum+' mode active ✓','c-ok');
+      if(SC.stpRoot) tprint('spanning-tree vlan '+v.vlans+' priority 0 ✓','c-ok');
+    }
+    tprint('end','c-info');
+    return;
+  }
+  if(cl.includes('ip int brief')||cl.includes('ip interface brief')){
+    tprint('Interface              IP-Address      OK? Method Status   Protocol','c-info');
+    briefLines.forEach(function(l){tprint(l,'');});
+    return;
+  }
+  if(cl.includes('run int lo')){
+    var loNum=cl.match(/lo(\d*)/);var loN=loNum?loNum[1]||'0':'0';
+    tprint('interface Loopback'+loN,'c-info');
+    if(cat==='OSPF') tprint(' ip address '+v.loopIP+' 255.255.255.255','c-ok');
+    else if(cat==='eBGP'&&loN==='0') tprint(' ip address '+v.rid+' 255.255.255.255','c-ok');
+    return;
+  }
+  if(cl.includes('sec sla')){
+    tprint('ip sla '+v.slaOp,'c-ok');
+    if(SC.slaDone) tprint('ip sla schedule '+v.slaOp+' life forever start-time now','c-ok');
+    return;
+  }
+  if(cl.includes('flow monitor')||cl.includes('flow exporter')){
+    if(v.monName) tprint('Flow Monitor '+v.monName+':','c-info');
+    if(v.expName) tprint('Flow Exporter '+v.expName+':','c-info');
+    if(SC.nfDone) tprint('  Status: Active','c-ok');
+    else tprint('  Status: Not fully configured','c-err');
+    return;
+  }
+  if(cl.includes('monitor session')){
+    tprint('Session '+(v.sess||'?'),'c-info');
+    tprint('Type              : Local Session','');
+    if(SC.spanSrc) tprint('Source Ports      : Both: '+(v.srcIf||v.srcIf+','+v.srcIf2||'vlan '+v.vlan),'c-ok');
+    else tprint('Source Ports      : None','');
+    if(SC.spanDst) tprint('Destination Ports : '+v.spanDst||v.dst||v.dstIf,'c-ok');
+    else tprint('Destination Ports : None','');
+    return;
+  }
+  if(cl.includes('access-lists')||cl.includes('access-list')){
+    tprint('Extended IP access list '+(v.aclNum||'?'),'c-info');
+    tprint('  10 permit ip any any','');
+    if(SC.aclDone) tprint('   5 permit '+v.proto+' any any ✓','c-ok');
+    return;
+  }
+  if(cl.includes('ospf')){
+    tprint('Routing Process "ospf '+(v.pid||'?')+'" with ID '+(v.loopIP||'unset'),'c-info');
+    if(SC.ospfRid) tprint('  Router-ID: '+v.loopIP,'c-ok');
+    return;
+  }
+  if(cl.includes('bgp')){
+    tprint('BGP router identifier '+(SC.bgpRid?v.rid:'not set')+', local AS number '+(v.localAs||'?'),'c-info');
+    return;
+  }
+  tprint('% Invalid input or not supported in simulation','c-err');
+}
+
+// ── NetFlow/SPAN/SLA processor ──
+function procSLA(cmd,cl,m){
+  var v=CQ.vars, sub=CQ.sub||CQ.subtype;
+  if(m==='config'){
+    if((sub==='A'||sub==='B')&&cl==='flow exporter '+v.expName.toLowerCase()){setMode('config-flow-exporter');return;}
+    if((sub==='A'||sub==='B')&&cl.startsWith('flow exporter ')){tprint('% Wrong exporter name — run "show run" to verify','c-err');return;}
+    if(cl==='ip sla '+v.slaOp){setMode('config-ip-sla');return;}
+    if(/^ip sla \d+$/.test(cl)){tprint('% Wrong SLA op number — run "show run | sec sla"','c-err');return;}
+    if(cl.startsWith('ip sla schedule ')){
+      if(cl.includes(' '+v.slaOp+' ')&&cl.includes('life forever')&&cl.includes('start-time now')){SC.slaDone=true;tprint('');}
+      else if(!cl.includes(' '+v.slaOp)) tprint('% Wrong SLA op number','c-err');
+      else tprint('% Syntax: ip sla schedule <op> life forever start-time now','c-err');
+      return;
+    }
+    if((sub==='C'||sub==='D')&&(cl==='interface ethernet0/0'||cl==='int e0/0'||cl==='int ethernet0/0')){setMode('config-if');return;}
+    unk(cmd); return;
+  }
+  if(m==='config-flow-exporter'){
+    if(sub==='A'&&cl.startsWith('transport udp ')){
+      var p=parseInt(cl.split(' ')[2]);
+      if(p===v.udp){SC.nfDone=true;tprint('');}else tprint('% Wrong UDP port — task requires '+v.udp,'c-err');
+      return;
+    }
+    if(sub==='B'&&cl.startsWith('destination ')){
+      var ip=cl.split(' ')[1];
+      if(ip===v.destIP){SC.nfDone=true;tprint('');}else tprint('% Wrong IP — task requires '+v.destIP,'c-err');
+      return;
+    }
+    unk(cmd); return;
+  }
+  if(m==='config-ip-sla'){
+    if(sub==='B'&&cl.startsWith('http get ')){
+      var url=cmd.substring(9);
+      if(url==='http://'+v.destIP){SC.httpSet=true;setMode('config-ip-sla-http');tprint('');}
+      else tprint('% Wrong URL — task requires http://'+v.destIP,'c-err');
+      return;
+    }
+    if((sub==='C'||sub==='D')&&cl.startsWith('icmp-echo ')){
+      var tgt=sub==='C'?v.loopIP:v.pc1;
+      var ip2=cmd.split(' ')[1];
+      if(ip2===tgt){SC.icmpSet=true;tprint('');}else tprint('% Wrong target IP — run "show ip int brief" on Sw1 / check topology','c-err');
+      return;
+    }
+    if(cl.startsWith('frequency ')){
+      var f=parseInt(cl.split(' ')[1]);
+      if(f===v.freq){SC.freqSet=true;if(SC.icmpSet)SC.slaDone=true;tprint('');}
+      else tprint('% Wrong frequency — task requires '+v.freq,'c-err');
+      return;
+    }
+    unk(cmd); return;
+  }
+  if(m==='config-ip-sla-http'){
+    if(cl.startsWith('frequency ')){
+      var f2=parseInt(cl.split(' ')[1]);
+      if(f2===v.freq){SC.httpFreqSet=true;SC.slaDone=true;tprint('');}else tprint('% Wrong frequency','c-err');
+      return;
+    }
+    unk(cmd); return;
+  }
+  if(m==='config-if'){
+    if(cl==='ip flow monitor '+v.monName.toLowerCase()+' input'){SC.nfIn=true;if(SC.nfOut)SC.nfDone=true;tprint('');return;}
+    if(cl==='ip flow monitor '+v.monName.toLowerCase()+' output'){SC.nfOut=true;if(SC.nfIn)SC.nfDone=true;tprint('');return;}
+    if(cl.startsWith('ip flow monitor ')&&!cl.includes(v.monName.toLowerCase())){tprint('% Wrong monitor name — run "show flow monitor"','c-err');return;}
+    unk(cmd); return;
+  }
+  // Sw1
+  if(m==='config'){
+    var sm=cmd.match(/monitor session (\d+) source (vlan (\d+)|interface (\S+)) (both|rx|tx)/i);
+    var dm=cmd.match(/monitor session (\d+) destination interface (\S+)/i);
+    if(sm){
+      var sessOk=parseInt(sm[1])===v.sess, dirOk=sm[5].toLowerCase()==='both', ifOk=false;
+      if(sub==='B'){var pts=sm[4]?sm[4].split(','):[];ifOk=pts.some(function(p){return p.toLowerCase()===v.srcIf.toLowerCase();})&&pts.some(function(p){return p.toLowerCase()===v.srcIf2.toLowerCase();});}
+      else if(sm[3]) ifOk=parseInt(sm[3])===v.vlan;
+      else if(sm[4]) ifOk=sm[4].toLowerCase()===v.srcIf.toLowerCase();
+      if(sessOk&&ifOk&&dirOk){SC.spanSrc=true;tprint('');}
+      else if(!sessOk) tprint('% Wrong session number — task requires '+v.sess,'c-err');
+      else if(!ifOk) tprint('% Wrong source interface/vlan — check the task','c-err');
+      else tprint('% Direction must be "both"','c-err');
+      return;
+    }
+    if(dm){
+      var sOk=parseInt(dm[1])===v.sess, iOk=dm[2].toLowerCase()===v.spanDst||v.dst||v.dstIf.toLowerCase();
+      if(sOk&&iOk){SC.spanDst=true;tprint('');}
+      else if(!sOk) tprint('% Wrong session — task requires '+v.sess,'c-err');
+      else tprint('% Wrong destination — task requires '+v.spanDst||v.dst||v.dstIf,'c-err');
+      return;
+    }
+    unk(cmd);
+  }
+}
+
+// ── OSPF processor ──
+function procOSPF(cmd,cl,m){
+  var v=CQ.vars;
+  if(m==='config'){
+    if(cl==='router ospf '+v.pid){SC.ospfProc=true;setMode('config-router');return;}
+    if(/^router ospf \d+$/.test(cl)){tprint('% Wrong process ID — task requires '+v.pid,'c-err');return;}
+    if(cl.startsWith('interface range ')||cl.startsWith('int range ')){devStates[curDev].inRange=true;setMode('config-if-range');return;}
+    if(cl.startsWith('interface ')||cl.startsWith('int ')){devStates[curDev].inRange=false;var ifn=cl.replace(/^int(erface)?\s+/,'');devStates[curDev].lastIf=ifn;setMode('config-if');return;}
+    unk(cmd); return;
+  }
+  if(m==='config-router'){
+    if(cl.startsWith('router-id ')){
+      if(cmd.split(' ')[1]===v.loopIP){SC.ospfRid=true;tprint('');}else tprint('% Wrong router-id — run "show run int lo0" to verify','c-err');
+      return;
+    }
+    if(cl.startsWith('area ')&&cl.includes('range ')){
+      if(cl.includes('area '+v.stub)&&cl.includes(v.summNet)){SC.ospfRange=true;tprint('');}
+      else if(!cl.includes('area '+v.stub)) tprint('% Wrong area — task requires area '+v.stub,'c-err');
+      else tprint('% Wrong network — check the summary range','c-err');
+      return;
+    }
+    if(cl.startsWith('network ')){
+      var parts=cl.split(' '); var area=parts[parts.length-1];
+      if(area==='0'){SC.ospfNet=true;tprint('');}
+      else{SC.ospfNetStub=true;tprint('');}
+      return;
+    }
+    unk(cmd); return;
+  }
+  if(m==='config-if'||m==='config-if-range'){
+    if(cl.startsWith('ip ospf '+v.pid+' area ')){
+      var areaN=cl.split('area ')[1].trim();
+      if(areaN==='0'){SC.ospfIface=true;tprint('');}
+      else if(areaN===String(v.stub)){SC.ospfStub=true;tprint('');}
+      else tprint('% Wrong area number','c-err');
+      return;
+    }
+    if(cl.startsWith('ip ospf ')&&!cl.startsWith('ip ospf '+v.pid)){tprint('% Wrong OSPF process ID — task requires '+v.pid,'c-err');return;}
+    if(cl.startsWith('interface ')||cl.startsWith('int ')){var ifn2=cl.replace(/^int(erface)?\s+/,'');devStates[curDev].lastIf=ifn2;setMode('config-if');return;}
+    unk(cmd); return;
+  }
+  unk(cmd);
+}
+
+// ── VRF+Tunnel processor ──
+function procVRF(cmd,cl,m){
+  var v=CQ.vars;
+  if(m==='config'){
+    if(cl.startsWith('interface ')||cl.startsWith('int ')){
+      var ifn=cl.replace(/^int(erface)?\s+/,'').trim();
+      devStates[curDev].curIf=ifn; setMode('config-if'); return;
+    }
+    if(cl.startsWith('ip route vrf ')){
+      if(cl.includes(v.vrf.toLowerCase())){SC.vrfRoute=true;tprint('');}else tprint('% Wrong VRF name','c-err');
+      return;
+    }
+    unk(cmd); return;
+  }
+  if(m==='config-if'){
+    if(cl.startsWith('ip vrf forwarding ')){
+      var vn=cmd.split(' ')[3];
+      if(vn.toLowerCase()===v.vrf.toLowerCase()){
+        if((devStates[curDev].curIf||'').startsWith('tunnel')) SC.tunVrf=true;
+        else SC.vrfIface=true;
+        tprint('% Interface not in VRF before. All addresses removed.','c-err');tprint('');
+      } else tprint('% Wrong VRF name — task requires '+v.vrf,'c-err');
+      return;
+    }
+    if(cl.startsWith('ip address ')){tprint('');return;}
+    if(cl==='no shutdown'){tprint('%LINK-3-UPDOWN: changed state to up','c-ok');return;}
+    if(cl.startsWith('tunnel source ')){devStates[curDev].tunSrc=true;if(devStates[curDev].tunDst)SC.tunSrcDst=true;tprint('');return;}
+    if(cl.startsWith('tunnel destination ')){devStates[curDev].tunDst=true;if(devStates[curDev].tunSrc)SC.tunSrcDst=true;tprint('');return;}
+    if(cl.startsWith('tunnel vrf ')){tprint('');return;}
+    if(cl.startsWith('tunnel mode ')){tprint('');return;}
+    unk(cmd); return;
+  }
+  unk(cmd);
+}
+
+// ── EtherChannel+STP processor ──
+function procEC(cmd,cl,m){
+  var v=CQ.vars;
+  if(m==='config'){
+    if(cl.startsWith('no interface port-channel')){SC.noOldPo=true;tprint('');return;}
+    if(cl.startsWith('interface range ')||cl.startsWith('int range ')){setMode('config-if-range');return;}
+    if(cl.startsWith('interface port-channel')||cl.startsWith('int port-channel')){setMode('config-if');return;}
+    if(cl.startsWith('spanning-tree vlan ')&&cl.includes('priority 0')){SC.stpRoot=true;tprint('');return;}
+    if(cl.startsWith('spanning-tree vlan ')&&!cl.includes('priority 0')){tprint('% Must use priority 0 to ensure root','c-err');return;}
+    unk(cmd); return;
+  }
+  if(m==='config-if-range'){
+    if(cl==='switchport trunk encapsulation dot1q'){tprint('');return;}
+    if(cl==='switchport mode trunk'){tprint('');return;}
+    if(cl.startsWith('channel-group ')&&cl.includes('mode active')){SC.lacp=true;tprint('');return;}
+    if(cl.startsWith('channel-group ')&&cl.includes('mode on')){tprint('% mode "on" does not negotiate LACP — use "mode active"','c-err');return;}
+    if(cl==='no shutdown'){tprint('');return;}
+    unk(cmd); return;
+  }
+  if(m==='config-if'){
+    if(cl==='switchport trunk encapsulation dot1q'){tprint('');return;}
+    if(cl==='switchport mode trunk'){SC.poTrunk=true;tprint('');return;}
+    if(cl==='no shutdown'){tprint('');return;}
+    unk(cmd); return;
+  }
+  unk(cmd);
+}
+
+// ── eBGP processor ──
+function procBGP(cmd,cl,m){
+  var v=CQ.vars;
+  if(m==='config'){
+    if(cl==='router bgp '+v.localAs){SC.bgpProc=true;setMode('config-router');return;}
+    if(/^router bgp \d+$/.test(cl)){tprint('% Wrong AS number — task requires AS '+v.localAs,'c-err');return;}
+    unk(cmd); return;
+  }
+  if(m==='config-router'){
+    if(cl.startsWith('bgp router-id ')){
+      if(cmd.split(' ')[2]===v.rid){SC.bgpRid=true;tprint('');}else tprint('% Wrong router-id — run "show ip int brief" to verify Loopback0','c-err');
+      return;
+    }
+    if(cl.startsWith('neighbor ')&&cl.includes('remote-as')){SC.bgpNeigh=true;tprint('');return;}
+    if(cl==='address-family ipv4'){SC.bgpAf=true;setMode('config-router-af');return;}
+    unk(cmd); return;
+  }
+  if(m==='config-router-af'){
+    if(cl.startsWith('neighbor ')&&cl.endsWith('activate')){tprint('');return;}
+    if(cl.startsWith('network ')){SC.bgpNet=true;tprint('');return;}
+    unk(cmd); return;
+  }
+  unk(cmd);
+}
+
+// ── EIGRP+CoPP processor ──
+function procCoPP(cmd,cl,m){
+  var v=CQ.vars;
+  if(m==='config'){
+    if(cl.startsWith('ip access-list extended ')){setMode('config-ext-nacl');return;}
+    if(cl.startsWith('class-map match-any ')){SC.cmapDone=true;setMode('config-cmap');return;}
+    if(cl.toLowerCase()==='policy-map copp'){SC.pmapDone=true;setMode('config-pmap');return;}
+    unk(cmd); return;
+  }
+  if(m==='config-ext-nacl'){
+    if(cl.includes('permit '+v.proto+' any any')||cl.includes('permit eigrp any any')||cl.includes('permit ospf any any')){
+      if(curDev===v.aclDev) SC.aclDone=true;
+      else SC.coppAcl=true;
+      tprint(''); return;
+    }
+    if(cl.startsWith('permit tcp ')||cl.startsWith('permit icmp ')||cl.startsWith('permit udp ')){
+      SC.coppAcl=true; tprint(''); return;
+    }
+    unk(cmd); return;
+  }
+  if(m==='config-cmap'){
+    if(cl.startsWith('match access-group name ')){tprint('');return;}
+    unk(cmd); return;
+  }
+  if(m==='config-pmap'){
+    if(cl.startsWith('class ')){setMode('config-pmap-c');return;}
+    unk(cmd); return;
+  }
+  if(m==='config-pmap-c'){
+    if(cl.startsWith('police ')){
+      if(cl.includes(String(v.rate))){SC.policeDone=true;tprint('');}else tprint('% Wrong rate — task requires '+v.rate+' bps','c-err');
+      return;
+    }
+    if(cl==='control-plane'){setMode('config-cp');return;}
+    unk(cmd); return;
+  }
+  if(m==='config-cp'){
+    if(cl==='service-policy input copp'){SC.cpDone=true;tprint('');return;}
+    unk(cmd); return;
+  }
+  unk(cmd);
+}
+
+// ══════════════════════════════════════════════════════════════
+// TAB AUTOCOMPLETE
+// ══════════════════════════════════════════════════════════════
+var TREES={};
+function getTree(){
+  var cat=CQ.cat, m=getMode();
+  var base=[{c:'configure terminal',d:'전역 설정'},{c:'show running-config',d:'설정 확인'},{c:'show ip interface brief',d:'인터페이스 확인'},{c:'write memory',d:'저장'},{c:'wr',d:'저장'},{c:'end',d:'user mode'}];
+  if(cat==='NetFlow/SPAN/SLA'){
+    var tr={user:[{c:'enable',d:''}],exec:[...base,{c:'show flow monitor',d:''},{c:'show run | sec sla',d:''},{c:'show monitor session',d:''}],config:[{c:'flow exporter',d:'이름은 show run 확인'},{c:'ip sla',d:'ip sla <op>'},{c:'ip sla schedule',d:'life forever start-time now'},{c:'interface Ethernet0/0',d:''},{c:'end',d:''},{c:'exit',d:''}],'config-flow-exporter':[{c:'transport udp',d:'<port>'},{c:'destination',d:'<ip>'},{c:'exit',d:''},{c:'end',d:''}],'config-ip-sla':[{c:'icmp-echo',d:'<target-ip>'},{c:'http get',d:'http get <url>'},{c:'frequency',d:'<seconds>'},{c:'exit',d:''},{c:'end',d:''}],'config-ip-sla-http':[{c:'frequency',d:'<seconds>'},{c:'exit',d:''},{c:'end',d:''}],'config-if':[{c:'ip flow monitor',d:'<name> input'},{c:'exit',d:''},{c:'end',d:''}]};
+    if(curDev==='Sw1') tr['config']=[{c:'monitor session',d:'<sess> source interface <if> both'},{c:'end',d:''},{c:'exit',d:''}];
+    return tr[m]||[];
+  }
+  if(cat==='OSPF'){var tr={user:[{c:'enable',d:''}],exec:[...base,{c:'show run int lo0',d:'Loopback0 IP 확인'},{c:'show run | sec sla',d:''}],config:[{c:'router ospf',d:'<pid>'},{c:'interface range',d:'...'},{c:'interface',d:'...'},{c:'end',d:''},{c:'exit',d:''}],'config-router':[{c:'router-id',d:'<ip>'},{c:'area',d:'area <n> range <net> <mask>'},{c:'network',d:'<net> <wildcard> area <n>'},{c:'exit',d:''},{c:'end',d:''}],'config-if':[{c:'ip ospf',d:'<pid> area <n>'},{c:'interface',d:'...'},{c:'exit',d:''},{c:'end',d:''}],'config-if-range':[{c:'ip ospf',d:'<pid> area <n>'},{c:'interface',d:'...'},{c:'exit',d:''},{c:'end',d:''}]};return tr[m]||[];}
+  if(cat==='VRF+Tunnel'){var tr={user:[{c:'enable',d:''}],exec:[...base],config:[{c:'interface Ethernet0/1',d:''},{c:'interface Tunnel',d:'<n>'},{c:'ip route vrf',d:'<vrf> <net> <mask> <nh>'},{c:'end',d:''},{c:'exit',d:''}],'config-if':[{c:'ip vrf forwarding',d:'<vrf-name>'},{c:'ip address',d:'<ip> <mask>'},{c:'no shutdown',d:''},{c:'tunnel source',d:'Ethernet0/0'},{c:'tunnel destination',d:'<ip>'},{c:'exit',d:''},{c:'end',d:''}]};return tr[m]||[];}
+  if(cat==='EtherChannel+STP'){var tr={user:[{c:'enable',d:''}],exec:[...base],config:[{c:'no interface Port-channel',d:'<n>'},{c:'interface range',d:'<range>'},{c:'interface Port-channel',d:'<n>'},{c:'spanning-tree vlan',d:'<vlans> priority 0'},{c:'end',d:''},{c:'exit',d:''}],'config-if-range':[{c:'switchport trunk encapsulation dot1q',d:''},{c:'switchport mode trunk',d:''},{c:'channel-group',d:'<n> mode active'},{c:'no shutdown',d:''},{c:'exit',d:''}],'config-if':[{c:'switchport trunk encapsulation dot1q',d:''},{c:'switchport mode trunk',d:''},{c:'no shutdown',d:''},{c:'exit',d:''}]};return tr[m]||[];}
+  if(cat==='eBGP'){var tr={user:[{c:'enable',d:''}],exec:[...base],config:[{c:'router bgp',d:'<as>'},{c:'end',d:''},{c:'exit',d:''}],'config-router':[{c:'bgp router-id',d:'<ip>'},{c:'neighbor',d:'<ip> remote-as <as>'},{c:'address-family ipv4',d:''},{c:'exit',d:''},{c:'end',d:''}],'config-router-af':[{c:'neighbor',d:'<ip> activate'},{c:'network',d:'<ip> mask 255.255.255.255'},{c:'end',d:''}]};return tr[m]||[];}
+  if(cat==='EIGRP+CoPP'){var tr={user:[{c:'enable',d:''}],exec:[...base,{c:'show access-lists',d:'ACL 번호 확인'}],config:[{c:'ip access-list extended',d:'<num>'},{c:'class-map match-any',d:'<name>'},{c:'policy-map COPP',d:''},{c:'end',d:''},{c:'exit',d:''}],'config-ext-nacl':[{c:'5 permit eigrp any any',d:''},{c:'5 permit ospf any any',d:''},{c:'permit tcp',d:'<net> <wild> any eq 22'},{c:'permit icmp',d:'<net> <wild> any'},{c:'end',d:''}],'config-cmap':[{c:'match access-group name',d:'<acl-name>'},{c:'exit',d:''}],'config-pmap':[{c:'class',d:'<name>'},{c:'exit',d:''}],'config-pmap-c':[{c:'police',d:'<bps> conform-action transmit exceed-action drop'},{c:'control-plane',d:''},{c:'exit',d:''}],'config-cp':[{c:'service-policy input COPP',d:''},{c:'end',d:''}]};return tr[m]||[];}
+  return [];
+}
+
+function getAC(partial){var p=partial.trim().toLowerCase();var list=getTree();if(!p)return list;return list.filter(function(i){return i.c.toLowerCase().startsWith(p);});}
+function cpfx(s){if(!s.length)return '';var p=s[0];for(var i=1;i<s.length;i++){while(s[i].indexOf(p)!==0){p=p.slice(0,-1);if(!p)return '';}}return p;}
+function renderAC(m){var box=document.getElementById('acbox');if(!m.length){box.style.display='none';acIdx=-1;return;}box.innerHTML='';m.forEach(function(x,i){var d=document.createElement('div');d.className='aci'+(i===acIdx?' sel':'');d.innerHTML='<span class="acmd">'+x.c+'</span><span class="adsc">'+x.d+'</span>';d.onmousedown=function(e){e.preventDefault();document.getElementById('cin').value=x.c+' ';hideAC();document.getElementById('cin').focus();};box.appendChild(d);});box.style.display='block';}
+function hideAC(){document.getElementById('acbox').style.display='none';acIdx=-1;}
+function appendInput(t){var cin=document.getElementById('cin');cin.value=t+' ';cin.focus();renderAC(getAC(cin.value));}
+
+function submitCmd(){
+  var cin=document.getElementById('cin');var v=cin.value;
+  var acVisible=document.getElementById('acbox').style.display!=='none';
+  var matches=getAC(v);
+  if(acVisible&&acIdx>=0&&matches[acIdx]){cin.value=matches[acIdx].c+' ';hideAC();return;}
+  if(v.trim()){if(!devHists[curDev])devHists[curDev]=[];devHists[curDev].unshift(v);}
+  histIdx=0;hideAC();
+  if(window.innerWidth<900) showTopTab('terminal');
+  runCmd(v);cin.value='';updPrompt();cin.focus();
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  var cin=document.getElementById('cin');
+  cin.addEventListener('input',function(){acIdx=-1;var v=this.value;if(!v.trim()){hideAC();return;}renderAC(getAC(v));});
+  cin.addEventListener('keydown',function(e){
+    var inp=this,acV=document.getElementById('acbox').style.display!=='none',matches=getAC(inp.value);
+    if(e.key==='Tab'){
+      e.preventDefault();
+      if(!inp.value.trim()){var all=getTree();if(all.length){tprint('');all.forEach(function(x){tprint('  '+pad(x.c,48)+x.d,'c-hint');});tprint('');}return;}
+      if(matches.length===1){inp.value=matches[0].c+' ';hideAC();}
+      else if(matches.length>1){var pfx=cpfx(matches.map(function(m){return m.c;}));if(pfx.length>inp.value.length)inp.value=pfx;renderAC(matches);if(matches.length<=8){tprint('');matches.forEach(function(x){tprint('  '+pad(x.c,48)+x.d,'c-hint');});tprint('');}}
+      else tprint('% Unrecognized command','c-err');
+    } else if(e.key==='ArrowUp'){e.preventDefault();if(acV&&matches.length){acIdx=Math.max(0,acIdx-1);renderAC(matches);}else{var h=devHists[curDev]||[];if(histIdx<h.length){inp.value=h[histIdx];histIdx++;}}}
+    else if(e.key==='ArrowDown'){if(acV&&matches.length){acIdx=Math.min(matches.length-1,acIdx+1);renderAC(matches);}else{histIdx=Math.max(0,histIdx-1);inp.value=(devHists[curDev]||[])[histIdx-1]||'';}}
+    else if(e.key==='Enter'){e.preventDefault();submitCmd();}
+    else if(e.key==='Escape')hideAC();
+  });
+  cin.addEventListener('keyup',function(e){if(e.key==='Enter'||e.keyCode===13){e.preventDefault();submitCmd();}});
+  document.getElementById('runbtn').addEventListener('click',submitCmd);
+  document.getElementById('lockBtn').addEventListener('click',unlock);
+  document.getElementById('lockInput').addEventListener('keyup',function(e){if(e.key==='Enter'||e.keyCode===13)unlock();});
+});
+
+// ══════════════════════════════════════════════════════════════
+// CHECK / SOLUTION / RESET / TABS
+// ══════════════════════════════════════════════════════════════
+function doCheck(){
+  var area=document.getElementById('sarea');area.innerHTML='';
+  var checks=CQ.checks;var all=true;
+  checks.forEach(function(c){
+    var ok=c.ok(SC);if(!ok)all=false;
+    var b=document.createElement('span');b.className=ok?'bok':'berr';
+    b.textContent=(ok?'✓ ':'✗ ')+c.l;area.appendChild(b);
+  });
+  if(all){var w=document.createElement('span');w.style.cssText='color:#3fb950;font-weight:700;font-size:12px;margin-left:4px;';w.textContent='완벽합니다! 🎉';area.appendChild(w);}
+}
+
+function doSolution(){
+  var sols=CQ.solution;
+  var devs=Object.keys(sols);
+  var show=devs.indexOf(curDev)>=0?curDev:devs[0];
+  tprint('─── 모범답안 ('+show+') ───','c-info');
+  (sols[show]||[]).forEach(function(l){
+    if(l.startsWith('###')) tprint(l,'c-hint');
+    else tprint('  '+l,'c-ok');
+  });
+  tprint('────────────────','c-info');
+}
+
+function doReset(){
+  CQ.devs.forEach(function(d){devStates[d]={mode:'user'};devHists[d]=[];});
+  SC=initSC();
+  document.getElementById('tout').innerHTML='';
+  document.getElementById('cin').value='';
+  document.getElementById('sarea').innerHTML='';
+  hideAC();histIdx=0;acIdx=-1;
+  curDev=CQ.devs[0];
+  document.querySelectorAll('.dt').forEach(function(t){t.classList.remove('on');});
+  var el=document.getElementById('dt-'+curDev);if(el)el.classList.add('on');
+  updPrompt();
+  tprint('Cisco IOS Software Simulation','c-info');
+  tprint('Category: '+CQ.cat+' ('+CQ.sub+')','c-info');
+  tprint('TIP: "show running-config" 로 pre-configured 항목 확인 후 작업하세요.','c-hint');
+  tprint('Tab=자동완성  ↑↓=히스토리  ▶버튼=실행','c-hint');
+  tprint('','');
+}
+
+function switchDev(name){
+  curDev=name;histIdx=0;acIdx=-1;
+  document.querySelectorAll('.dt').forEach(function(t){t.classList.remove('on');});
+  var el=document.getElementById('dt-'+name);if(el)el.classList.add('on');
+  document.getElementById('tout').innerHTML='';
+  document.getElementById('cin').value='';
+  hideAC();updPrompt();
+  tprint('--- Switched to '+name+' ---','c-info');
+  if(window.innerWidth<900) showTopTab('terminal');
+}
+
+function showTopTab(id){
+  if(window.innerWidth>=900){showLeftTab(id==='terminal'?'tasks':id);return;}
+  document.querySelectorAll('.topbar-tab').forEach(function(t){t.classList.remove('on');});
+  var tt=document.getElementById('ttab-'+id);if(tt)tt.classList.add('on');
+  document.querySelectorAll('.lsection').forEach(function(s){s.classList.remove('on');});
+  var ts=document.getElementById('termSection'),dv=document.getElementById('devtabsEl'),bw=document.querySelector('.brow'),sa=document.getElementById('sarea'),qb=document.getElementById('quickbar');
+  if(id==='tasks'){document.getElementById('ls-tasks').classList.add('on');ts.style.display='none';dv.style.display='none';bw.style.display='none';sa.style.display='none';qb.style.display='none';}
+  else if(id==='topology'){document.getElementById('ls-topology').classList.add('on');ts.style.display='none';dv.style.display='none';bw.style.display='none';sa.style.display='none';qb.style.display='none';}
+  else{ts.style.display='flex';dv.style.display='flex';bw.style.display='flex';sa.style.display='flex';qb.style.display='flex';setTimeout(function(){document.getElementById('cin').focus();},80);}
+}
+function showLeftTab(id){
+  document.querySelectorAll('.lt').forEach(function(t){t.classList.remove('on');});
+  var el=document.getElementById('lt-'+id);if(el)el.classList.add('on');
+  document.querySelectorAll('.lsection').forEach(function(s){s.classList.remove('on');});
+  var el2=document.getElementById('ls-'+id);if(el2)el2.classList.add('on');
+}
+
+function unlock(){
+  if(document.getElementById('lockInput').value.trim()==='9095'){
+    document.getElementById('lockScreen').style.display='none';
+    document.getElementById('app').style.display='flex';
+    buildPool();
+    newQ();
+    if(window.innerWidth<900){
+      document.querySelectorAll('.lsection').forEach(function(p){if(!p.classList.contains('on'))p.style.display='none';});
+    }
+  } else {
+    document.getElementById('lockErr').textContent='비밀번호가 틀렸습니다';
+    document.getElementById('lockInput').value='';
+  }
+}
+</script>
+</body>
+</html>
