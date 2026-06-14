@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CCNP 단어 매칭 카드</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,'Segoe UI','Noto Sans KR',sans-serif;background:#111;color:#eee}
+header{background:#1a1a2e;padding:18px;text-align:center;border-bottom:3px solid #c8102e}
+header h1{font-size:18px;color:#fff}
+header p{font-size:13px;color:#aaa;margin-top:6px;line-height:1.6}
+.rule{background:#1e293b;margin:12px;padding:14px;border-radius:12px;border:2px dashed #c8102e;text-align:center;font-size:15px;line-height:1.8}
+.rule b{color:#38bdf8}
+.rule .g{color:#4ade80;font-weight:800}
+.tabs{display:flex;overflow-x:auto;background:#1a1a2e;position:sticky;top:0;z-index:10;border-bottom:1px solid #333}
+.tab{padding:11px 14px;font-size:13px;color:#888;border:0;background:transparent;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent}
+.tab.on{color:#fff;border-bottom-color:#c8102e;font-weight:700}
+.wrap{max-width:700px;margin:0 auto;padding:8px 12px 40px}
+.section-title{font-size:16px;font-weight:800;color:#f59e0b;margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid #333}
+.card{background:#1a1c24;border-radius:12px;margin:8px 0;overflow:hidden}
+.card-q{padding:14px 16px;font-size:15px;line-height:1.6}
+.card-q .see{color:#38bdf8;font-weight:800;font-size:16px;background:#38bdf811;padding:2px 6px;border-radius:4px}
+.card-a{padding:12px 16px;background:#0d1a0d;border-top:1px solid #1f3d1f;font-size:15px;line-height:1.6}
+.card-a .pick{color:#4ade80;font-weight:800;font-size:16px;background:#4ade8011;padding:2px 6px;border-radius:4px}
+.card-a .ko{color:#94a3b8;font-size:13px}
+.arrow{text-align:center;color:#c8102e;font-size:20px;font-weight:900;padding:2px 0}
+.group{margin-bottom:24px}
+.hot{border-left:4px solid #c8102e}
+.mega{background:#2a1015;border:2px solid #c8102e}
+.mega .card-q{font-size:16px}
+.tip{background:#1e293b;border-radius:10px;padding:12px 14px;margin:10px 0;font-size:13px;color:#94a3b8;line-height:1.7}
+.tip b{color:#f59e0b}
+.count{font-size:11px;color:#666;float:right}
+.set{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}
+@media(max-width:500px){.set{grid-template-columns:1fr}}
+.set-item{background:#1a1c24;border-radius:8px;padding:10px 12px;text-align:center}
+.set-item .k{color:#38bdf8;font-weight:700;font-size:14px}
+.set-item .eq{color:#c8102e;font-weight:900;margin:4px 0}
+.set-item .v{color:#4ade80;font-weight:700;font-size:14px}
+</style>
+</head>
+<body>
+
+<header>
+<h1>🎯 CCNP 단어 매칭 카드</h1>
+<p>이해 안 해도 됩니다<br>문제에서 <b style="color:#38bdf8">파란 단어</b> 보이면 → 답에서 <b style="color:#4ade80">초록 단어</b> 찾기</p>
+</header>
+
+<div class="rule">
+사용법: 문제를 읽다가 <b>파란 단어</b>가 눈에 들어오면<br>
+보기 A~D 중에 <span class="g">초록 단어</span>가 들어있는 걸 고르세요
+</div>
+
+<div class="tabs" id="tabs">
+<button class="tab on" data-t="all">전체</button>
+<button class="tab" data-t="top">⭐최빈출</button>
+<button class="tab" data-t="sdwan">SD-WAN</button>
+<button class="tab" data-t="sdaccess">SD-Access</button>
+<button class="tab" data-t="auto">코딩/API</button>
+<button class="tab" data-t="sec">보안</button>
+<button class="tab" data-t="etc">기타</button>
+</div>
+
+<div class="wrap">
+
+<!-- ==================== 최빈출 ==================== -->
+<div class="group" data-g="top">
+<div class="section-title">⭐ 가장 많이 나오는 것 (이것만이라도!)</div>
+
+<div class="tip">
+<b>💡 이 페이지의 공식만 외워도 581문항 중 약 200문항(35%)을 커버합니다</b>
+</div>
+
+<div class="card mega hot">
+<div class="card-q">문제에서 <span class="see">Type 1</span> 이라는 단어가 보이면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">bare metal</span> 이 들어간 보기를 고르세요<br><span class="ko">💡 5번 출제됨. "직접 물리서버에 설치" 같은 말도 맞음</span></div>
+</div>
+
+<div class="card mega hot">
+<div class="card-q">문제에서 <span class="see">Type 2</span> 이라는 단어가 보이면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">application</span> + <span class="pick">operating system</span> 이 들어간 보기<br><span class="ko">💡 "OS 위에 설치되는 앱" 이라는 뜻의 보기를 고르세요</span></div>
+</div>
+
+<div class="card mega hot">
+<div class="card-q">문제에서 <span class="see">dumps</span> 가 보이면 (Python 관련)</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">json.dumps</span> 를 고르세요<br><span class="ko">💡 3번 출제. Python 데이터를 JSON 글자로 바꾸는 것</span></div>
+</div>
+
+<div class="card mega hot">
+<div class="card-q">문제에서 <span class="see">loads</span> 가 보이면 (Python 관련)</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">json.loads</span> 를 고르세요<br><span class="ko">💡 JSON 글자를 Python 데이터로 바꾸는 것</span></div>
+</div>
+
+<div class="tip"><b>외우는 법:</b> dump<b>s</b> = 글자(<b>s</b>tring)로 만들기 / load<b>s</b> = 글자(<b>s</b>tring)에서 읽기</div>
+
+<div class="card mega hot">
+<div class="card-q">문제에서 <span class="see">RADIUS</span> + <span class="see">fall back</span> 또는 <span class="see">local</span> 이 같이 보이면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 끝이 <span class="pick">radius local</span> 로 끝나는 보기를 고르세요<br><span class="ko">💡 3번 출제. "radius none"이 아니라 "radius local"!</span></div>
+</div>
+
+<div class="card mega hot">
+<div class="card-q">문제에서 <span class="see">no response</span> 또는 <span class="see">automatically authenticate</span> 가 보이면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 끝이 <span class="pick">radius none</span> 으로 끝나는 보기를 고르세요<br><span class="ko">💡 서버 응답 없을 때 그냥 통과시키라는 뜻</span></div>
+</div>
+
+<div class="tip"><b>구분법:</b> 문제에 "local" 또는 "fall back" → 답 끝이 <b>local</b><br>문제에 "no response" 또는 "automatically" → 답 끝이 <b>none</b></div>
+
+</div>
+
+<!-- ==================== SD-WAN ==================== -->
+<div class="group" data-g="sdwan">
+<div class="section-title">📡 SD-WAN (시험의 20%)</div>
+
+<div class="tip"><b>SD-WAN에는 일꾼이 4명 있어요. 이름만 외우면 됩니다:</b></div>
+
+<div class="card hot">
+<div class="card-q">문제에서 <span class="see">vManage</span> 뭐하는 놈이냐고 물으면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">manage</span>, <span class="pick">monitor</span>, <span class="pick">dashboard</span>, <span class="pick">configuration</span> 찾기<br><span class="ko">💡 이름에 "Manage"가 들어있으니까 → 관리하는 놈</span></div>
+</div>
+
+<div class="card hot">
+<div class="card-q">문제에서 <span class="see">vSmart</span> 뭐하는 놈이냐고 물으면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">policy</span>, <span class="pick">distribute</span>, <span class="pick">security</span>, <span class="pick">OMP</span> 찾기<br><span class="ko">💡 "Smart" = 똑똑이 → 정책이랑 보안 배포하는 두뇌</span></div>
+</div>
+
+<div class="card hot">
+<div class="card-q">문제에서 <span class="see">vBond</span> 뭐하는 놈이냐고 물으면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">orchestrat</span>, <span class="pick">onboard</span>, <span class="pick">STUN</span>, <span class="pick">authenticate</span> 찾기<br><span class="ko">💡 "Bond" = 유대/연결 → 처음 장비를 연결해주는 안내데스크</span></div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">OMP</span> 가 무슨 기능이냐고 물으면 (Choose two)</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">prefix</span>(또는 route) + <span class="pick">crypto key</span> 가 들어간 2개 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">traditional WAN</span> 특징이 뭐냐고 물으면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">unified</span> 또는 <span class="pick">lengthy</span> 가 들어간 보기 고르기<br><span class="ko">💡 옛날 방식 = 느리고 복잡하다는 뜻의 답</span></div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">multicloud</span> + Azure/AWS 가 보이면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">extension</span> 또는 <span class="pick">extend</span> 가 들어간 보기 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">STUN server</span> 또는 <span class="see">onboarding Edge</span></div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">vBond</span> 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">SD-WAN Manager REST API</span> 용도</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">external application</span> + <span class="pick">programmatically</span> 고르기</div>
+</div>
+</div>
+
+<!-- ==================== SD-Access ==================== -->
+<div class="group" data-g="sdaccess">
+<div class="section-title">🌐 SD-Access / Fabric (시험의 24%)</div>
+
+<div class="tip"><b>SD-Access는 3단어 세트만 외우면 됩니다:</b><br>
+데이터=<b style="color:#4ade80">VXLAN</b> / 컨트롤=<b style="color:#4ade80">LISP</b> / 정책=<b style="color:#4ade80">TrustSec</b></div>
+
+<div class="card hot">
+<div class="card-q">문제에서 <span class="see">data plane</span> 이 보이면 (SD-Access 관련)</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">VXLAN</span> 고르기</div>
+</div>
+
+<div class="card hot">
+<div class="card-q">문제에서 <span class="see">control plane</span> 이 보이면 (SD-Access 관련)</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">LISP</span> 고르기</div>
+</div>
+
+<div class="card hot">
+<div class="card-q">문제에서 <span class="see">segmentation</span> 또는 <span class="see">policy</span> + SD-Access</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">TrustSec</span> 또는 <span class="pick">SGT</span> 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">edge node</span> 역할이 뭐냐고 물으면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">endpoint</span> + <span class="pick">authenticate</span> 가 들어간 보기 고르기<br><span class="ko">💡 edge = 가장자리 = 사용자가 처음 만나는 곳</span></div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">border node</span> 역할이 뭐냐고 물으면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">external</span> + <span class="pick">Layer 3</span> 이 들어간 보기 고르기<br><span class="ko">💡 border = 국경 = 외부 세계와 연결하는 곳</span></div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">Identity Services Engine</span> 또는 <span class="see">ISE</span> 역할</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">endpoint</span> + <span class="pick">group mapping</span> + <span class="pick">policy</span> 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">VXLAN</span> 이 뭐냐고 물으면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">Layer 2</span> + <span class="pick">MAC-in-UDP</span> 가 같이 있는 보기 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">MTU</span> + SD-Access 가 보이면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">9100</span> 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">interconnect</span> + <span class="see">two sites</span> (Choose two)</div>
+<div class="arrow">⬇</div>
+<div class="card-a"><span class="pick">IP-based transit</span> + <span class="pick">SD-Access transit</span> 2개 다 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">Over the Top</span> 또는 <span class="see">OTT</span> + wireless</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">VXLAN</span> 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">wireless</span> + <span class="see">not integrate</span> (통합 안 함)</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">over the top</span> 이 들어간 보기 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">routed access</span> 또는 <span class="see">migration</span> + fabric</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">routed access</span> 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">unclaimed</span> + PnP(Plug and Play)</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">workflow</span> 또는 <span class="pick">not been assigned</span> 고르기</div>
+</div>
+</div>
+
+<!-- ==================== 코딩/API ==================== -->
+<div class="group" data-g="auto">
+<div class="section-title">💻 코딩 / API / 자동화 (시험의 21%)</div>
+
+<div class="card hot">
+<div class="card-q">문제에서 <span class="see">Northbound</span> 이 보이면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">external</span> 또는 <span class="pick">consumer</span> 또는 <span class="pick">application</span> 찾기<br><span class="ko">💡 North(위) = 위에 있는 앱들이 쓰는 것</span></div>
+</div>
+
+<div class="card hot">
+<div class="card-q">문제에서 <span class="see">Southbound</span> 이 보이면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">device</span> 또는 <span class="pick">network device</span> 찾기<br><span class="ko">💡 South(아래) = 아래에 있는 장비를 제어하는 것</span></div>
+</div>
+
+<div class="tip"><b>외우는 법:</b> ⬆️North = 위(앱) / ⬇️South = 아래(장비)</div>
+
+<div class="card hot">
+<div class="card-q">문제에서 <span class="see">Chef</span> 차이점이 뭐냐고 물으면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">agent</span> + <span class="pick">cookbook</span> 이 같이 있는 보기 고르기<br><span class="ko">💡 Chef(요리사) = cookbook(요리책) 사용</span></div>
+</div>
+
+<div class="card hot">
+<div class="card-q">문제에서 <span class="see">Ansible</span> 특징이 뭐냐고 물으면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">agentless</span> + <span class="pick">playbook</span> 이 같이 있는 보기 고르기<br><span class="ko">💡 Ansible만 유일하게 agentless! (설치 안 해도 됨)</span></div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">Puppet</span> 특징</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">manifest</span> 또는 <span class="pick">Domain Specific Language</span> 찾기</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">SaltStack</span> vs Ansible 차이</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">agent</span> 또는 <span class="pick">minion</span> 이 들어간 보기<br><span class="ko">💡 SaltStack = 에이전트(minion) 있음 / Ansible = 없음</span></div>
+</div>
+
+<div class="card">
+<div class="card-q">Python 코드에서 <span class="see">{ }</span> 중괄호로 만든 변수 → type() 물으면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">dict</span> 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">Python 코드에서 <span class="see">[ ]</span> 대괄호로 만든 변수 → type() 물으면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">list</span> 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">코드에서 <span class="see">port=22</span> 또는 <span class="see">ports=22</span> 보이면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">SSH</span> 고르기 <span class="ko">(22=SSH / 23이면 Telnet)</span></div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">YANG</span> + <span class="see">assigned names</span> 데이터 타입</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">enumeration</span> 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">secure API</span> 또는 <span class="see">API platform 보안</span></div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">web application firewall</span> 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">401</span> 에러코드가 보이면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">username</span> 또는 <span class="pick">password</span> + <span class="pick">incorrect</span> 고르기<br><span class="ko">💡 401 = 비번 틀림 / 404 = 못 찾음 / 200 = 성공</span></div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">DNA Center upgrade</span> 단계 (Choose two)</div>
+<div class="arrow">⬇</div>
+<div class="card-a"><span class="pick">system update</span> + <span class="pick">application updates</span> 2개 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">Design workflow</span> 언제 쓰냐고 물으면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">greenfield</span> 또는 <span class="pick">no existing</span> 고르기<br><span class="ko">💡 greenfield = 아무것도 없는 빈 땅에 새로 짓기</span></div>
+</div>
+</div>
+
+<!-- ==================== 보안 ==================== -->
+<div class="group" data-g="sec">
+<div class="section-title">🔒 보안 / AAA (시험의 13%)</div>
+
+<div class="tip"><b>AAA 문제 핵심:</b> 답 보기 맨 끝 단어만 보면 됩니다<br>
+끝이 <b style="color:#4ade80">local</b> = 서버 안 되면 로컬 대체<br>
+끝이 <b style="color:#4ade80">none</b> = 서버 안 되면 그냥 통과</div>
+
+<div class="card hot">
+<div class="card-q">문제에 <span class="see">fall back</span> 또는 <span class="see">local database</span> 가 보이면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">보기 끝이 <span class="pick">radius local</span> 인 것 고르기</div>
+</div>
+
+<div class="card hot">
+<div class="card-q">문제에 <span class="see">no response</span> 또는 <span class="see">automatically authenticate</span></div>
+<div class="arrow">⬇</div>
+<div class="card-a">보기 끝이 <span class="pick">radius none</span> 인 것 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">privilege</span> + <span class="see">exec mode</span> + SSH 로그인 자동</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">privilege level 15</span> 가 들어간 보기 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">600 seconds</span> + idle + 세션 종료</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">exec-timeout 10 0</span> 고르기<br><span class="ko">💡 10분 0초 = 600초. "exec-timeout 600"은 600분이라 틀림!</span></div>
+</div>
+</div>
+
+<!-- ==================== 기타 ==================== -->
+<div class="group" data-g="etc">
+<div class="section-title">🔧 기타 자주 나오는 것</div>
+
+<div class="card hot">
+<div class="card-q">문제에서 <span class="see">ping</span> OK + <span class="see">traceroute</span> 실패 (*** 표시)</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">UDP</span> 가 들어간 보기 고르기<br><span class="ko">💡 traceroute는 UDP를 쓰니까, UDP가 차단되면 실패</span></div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">SNMP</span> + <span class="see">reboot</span> 후 실패</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">interface index</span> + <span class="pick">changed</span> 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">stateful switchover</span> 정의가 뭐냐고 물으면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">failed</span> + <span class="pick">maintaining</span> 이 들어간 보기 고르기<br><span class="ko">💡 고장 나도 연결 유지하면서 교체하는 것</span></div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">HSRP</span> + <span class="see">burned-in</span> 또는 <span class="see">BIA</span></div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">use-bia</span> 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">HSRP</span> + <span class="see">preempt</span> + <span class="see">delay</span> + 복귀</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">delay minimum</span> 고르기 (sync 아님!)</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">VRRP</span> + 누가 master 되냐고 물으면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">priority 같으면 → <span class="pick">IP 주소가 가장 높은</span> 라우터<br><span class="ko">💡 HSRP는 반대로 IP 가장 높은 놈이 아님. VRRP만!</span></div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">virtual machine</span> 정의가 뭐냐고 물으면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">software version</span> 이 들어간 보기 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">hypervisor</span> + <span class="see">guest OS</span> 필요한 것</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">VM</span> 고르기 (container 아님!)</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">vDS</span> 또는 <span class="see">distributed switch</span></div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">centralized management</span> + <span class="pick">multiple ESXi</span> 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">traceroute</span>에서 같은 IP 반복 보이면</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">loop</span> 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">hosts</span> + <span class="see">routers</span> + <span class="see">multicast</span> 프로토콜</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">IGMP</span> 고르기 (PIM 아님!)</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">RP</span> + <span class="see">PIM sparse</span> 역할</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">root</span> + <span class="pick">shared</span> + <span class="pick">tree</span> 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">many access switches</span> + campus 설계</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">Layer 3</span> + <span class="pick">access</span> + <span class="pick">stacking</span> 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">NAT</span> + <span class="see">conserve</span> 또는 하나의 public IP</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">overload</span> 가 들어간 보기 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">NAT</span> + <span class="see">deterministic</span> 또는 1:1 매핑</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">static</span> 이 들어간 보기 고르기</div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">policy-based routing</span> 목적</div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">other than</span> + <span class="pick">destination</span> 고르기<br><span class="ko">💡 목적지 말고 다른 기준으로 보내는 것</span></div>
+</div>
+
+<div class="card">
+<div class="card-q">문제에서 <span class="see">WLC</span> + <span class="see">stateful switchover</span></div>
+<div class="arrow">⬇</div>
+<div class="card-a">답에서 <span class="pick">standby</span> + <span class="pick">copies</span> + <span class="pick">database</span> 고르기</div>
+</div>
+
+</div>
+
+</div><!-- wrap -->
+
+<script>
+document.querySelectorAll('.tab').forEach(btn=>{
+  btn.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on');
+    const t=btn.dataset.t;
+    document.querySelectorAll('.group').forEach(g=>{
+      g.style.display=(t==='all'||g.dataset.g===t)?'block':'none';
+    });
+  };
+});
+</script>
+</body>
+</html>
