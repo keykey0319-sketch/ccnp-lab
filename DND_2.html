@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>300-420 ENSLD 드래그앤드롭 연습</title>
+<style>
+  :root{
+    --navy:#0b2545;
+    --navy2:#123a6b;
+    --sky:#4fb3e8;
+    --sky-light:#e8f5fd;
+    --sky-mid:#bfe4f7;
+    --amber:#f5a623;
+    --green:#2ecc71;
+    --red:#e74c3c;
+    --gray:#8a97a8;
+    --bg:#f4f8fb;
+    --card:#ffffff;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; background:var(--bg); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Malgun Gothic",sans-serif; color:#1c2b3a; overscroll-behavior:none;}
+  #app{max-width:900px; margin:0 auto; padding:10px 10px 90px;}
+  header{position:sticky; top:0; z-index:50; background:var(--navy); color:#fff; padding:12px 14px; border-radius:0 0 14px 14px; box-shadow:0 2px 10px rgba(0,0,0,.15);}
+  header h1{font-size:15px; margin:0 0 6px; font-weight:700; letter-spacing:.2px;}
+  .top-row{display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--sky-mid);}
+  .progress-wrap{background:rgba(255,255,255,.15); border-radius:8px; height:6px; margin-top:8px; overflow:hidden;}
+  .progress-bar{background:var(--sky); height:100%; width:0%; transition:width .25s;}
+  .score-pill{background:rgba(255,255,255,.12); padding:3px 10px; border-radius:20px; font-weight:600;}
+
+  main{margin-top:14px;}
+  .qmeta{font-size:12px; color:var(--gray); margin-bottom:4px; font-weight:600;}
+  .instr{background:var(--card); border-left:4px solid var(--sky); padding:12px 14px; border-radius:8px; font-size:14px; line-height:1.5; margin-bottom:14px; box-shadow:0 1px 4px rgba(0,0,0,.05);}
+  .instr b{color:var(--navy2);}
+
+  .pool{display:flex; flex-wrap:wrap; gap:8px; padding:12px; background:var(--card); border-radius:12px; margin-bottom:14px; min-height:56px; box-shadow:0 1px 4px rgba(0,0,0,.05);}
+  .pool.empty::after{content:"모두 배치됨"; color:var(--gray); font-size:13px; padding:6px;}
+
+  .chip{
+    background:var(--sky-light); border:2px solid var(--sky-mid); color:#0e3050;
+    padding:9px 12px; border-radius:9px; font-size:13.5px; line-height:1.35;
+    cursor:grab; user-select:none; touch-action:none; font-weight:600;
+    max-width:100%; box-shadow:0 1px 2px rgba(0,0,0,.06);
+    transition:transform .1s, box-shadow .1s;
+  }
+  .chip.selected{ border-color:var(--amber); background:#fff4e0; box-shadow:0 0 0 3px rgba(245,166,35,.25); }
+  .chip.dragging{ opacity:.35; }
+  .ghost-chip{
+    position:fixed; z-index:999; pointer-events:none; background:var(--sky); color:#fff;
+    padding:9px 12px; border-radius:9px; font-size:13.5px; font-weight:600; box-shadow:0 6px 18px rgba(0,0,0,.25);
+    transform:translate(-50%,-120%); max-width:220px;
+  }
+
+  .zones{display:flex; flex-direction:column; gap:12px;}
+  .zone{background:var(--card); border-radius:12px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.05);}
+  .zone-head{background:var(--navy2); color:#fff; font-size:13px; font-weight:700; padding:9px 12px;}
+  .zone-body{padding:10px; display:flex; flex-direction:column; gap:8px;}
+  .slot{
+    min-height:44px; border:2px dashed #c9d6e3; border-radius:8px; display:flex; align-items:center;
+    padding:6px; background:#fbfdff; transition:border-color .15s, background .15s;
+  }
+  .slot.hover{border-color:var(--sky); background:var(--sky-light);}
+  .slot .chip{width:100%; cursor:grab;}
+  .slot.correct{border-color:var(--green); background:#eafaf0;}
+  .slot.incorrect{border-color:var(--red); background:#fdecea;}
+  .slot.correct .chip{background:#d9f7e6; border-color:var(--green);}
+  .slot.incorrect .chip{background:#fbdbd8; border-color:var(--red);}
+  .slot-empty-label{color:#b7c3d1; font-size:12.5px; padding-left:4px;}
+
+  .order-num{
+    display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%;
+    background:var(--navy2); color:#fff; font-size:11px; font-weight:700; margin-right:8px; flex-shrink:0;
+  }
+
+  .controls{
+    position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid #e2e8f0;
+    padding:10px 12px calc(10px + env(safe-area-inset-bottom)); display:flex; gap:8px; z-index:60;
+    box-shadow:0 -2px 10px rgba(0,0,0,.06);
+  }
+  .controls .wrap{max-width:900px; margin:0 auto; display:flex; gap:8px; width:100%;}
+  button{
+    border:none; border-radius:9px; padding:11px 10px; font-size:13px; font-weight:700; cursor:pointer;
+    flex:1; transition:transform .08s, opacity .15s;
+  }
+  button:active{transform:scale(.96);}
+  button:disabled{opacity:.4; cursor:not-allowed;}
+  .btn-nav{background:#eef2f6; color:var(--navy2);}
+  .btn-check{background:var(--sky); color:#fff;}
+  .btn-reveal{background:var(--amber); color:#fff;}
+  .btn-reset{background:#eef2f6; color:var(--red);}
+
+  .feedback{margin-top:10px; padding:10px 12px; border-radius:8px; font-size:13.5px; font-weight:700; text-align:center;}
+  .feedback.ok{background:#eafaf0; color:#1c8a4c;}
+  .feedback.bad{background:#fdecea; color:#c0392b;}
+  .feedback.info{background:#fff4e0; color:#8a5a00;}
+
+  .summary{background:var(--card); border-radius:12px; padding:18px; text-align:center; box-shadow:0 1px 4px rgba(0,0,0,.05);}
+  .summary h2{color:var(--navy2); margin-top:0;}
+  .summary .big{font-size:40px; font-weight:800; color:var(--sky);}
+  .qchips{display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-top:14px;}
+  .qchip{width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; cursor:pointer; color:#fff;}
+  .qchip.correct{background:var(--green);}
+  .qchip.incorrect{background:var(--red);}
+  .qchip.unanswered{background:var(--gray);}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>📡 300-420 ENSLD Drag &amp; Drop 연습</h1>
+    <div class="top-row">
+      <span id="qCounter">문제 1 / 16</span>
+      <span class="score-pill" id="scorePill">0 / 0</span>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+  </header>
+
+  <main id="main"></main>
+</div>
+
+<div class="controls">
+  <div class="wrap">
+    <button class="btn-nav" id="btnPrev">◀ 이전</button>
+    <button class="btn-check" id="btnCheck">채점</button>
+    <button class="btn-reveal" id="btnReveal">정답보기</button>
+    <button class="btn-reset" id="btnReset">초기화</button>
+    <button class="btn-nav" id="btnNext">다음 ▶</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   PRESERVATION NOTE: This is a new standalone file. No prior
+   source is being modified here, so no comment-out rule applies.
+   Data source: DnD_300-420.pdf (SPOTO 300-420 ENSLD dump, 16 D&D items).
+   ============================================================ */
+
+const QUESTIONS = [
+// -------- Q1 --------
+{ n:1, title:'YANG Model Characteristics', type:'bucket',
+  instr:'Drag and drop the characteristics from the left onto the YANG models they describe on the right. Not all options are used.',
+  targets:[
+    {id:'ciscoNative', label:'Cisco Native', cap:2},
+    {id:'openConfig', label:'OpenConfig', cap:2}
+  ],
+  items:[
+    {id:'i1', text:'platform dependent', target:'ciscoNative'},
+    {id:'i2', text:'supports CDP and LLDP', target:'ciscoNative'},
+    {id:'i3', text:'independent of underlying platform', target:'openConfig'},
+    {id:'i4', text:'supports LLDP only', target:'openConfig'},
+    {id:'i5', text:'standards dependent', target:null}
+  ]
+},
+// -------- Q2 --------
+{ n:2, title:'VPN Types', type:'bucket',
+  instr:'Drag and drop the descriptions from the left onto the corresponding VPN types on the right.',
+  targets:[
+    {id:'l2vpn', label:'Layer 2 VPN', cap:3},
+    {id:'mplsl3vpn', label:'MPLS Layer 3 VPN', cap:3}
+  ],
+  items:[
+    {id:'i1', text:'The customer controls the IP routing and policy governance.', target:'l2vpn'},
+    {id:'i2', text:'Sites appear to each other to be directly connected at Layer 3.', target:'l2vpn'},
+    {id:'i3', text:'The customer initiates Layer 3 connectivity with the remote sites.', target:'l2vpn'},
+    {id:'i4', text:'The service provider participates in routing with the customer.', target:'mplsl3vpn'},
+    {id:'i5', text:'Sites appear to be connected via the MPLS service provider network.', target:'mplsl3vpn'},
+    {id:'i6', text:'The customer establishes Layer 3 connectivity with the service provider edge device.', target:'mplsl3vpn'}
+  ]
+},
+// -------- Q3 --------
+{ n:3, title:'WAN Connectivity Categories', type:'bucket',
+  instr:'Drag and drop the descriptions from the left onto the corresponding WAN connectivity types and categories on the right.',
+  targets:[
+    {id:'sdwan', label:'CISCO SD-WAN', cap:3},
+    {id:'mplsvpn', label:'MPLS VPN', cap:3}
+  ],
+  items:[
+    {id:'i1', text:'Application data is encrypted end-to-end.', target:'sdwan'},
+    {id:'i2', text:'It supports end-to-end network segmentation.', target:'sdwan'},
+    {id:'i3', text:'Control traffic is fully encrypted and independent from the service provider network.', target:'sdwan'},
+    {id:'i4', text:'It is hard to detect sniffing incidents.', target:'mplsvpn'},
+    {id:'i5', text:'The WAN is a flat network with no network segmentation.', target:'mplsvpn'},
+    {id:'i6', text:'CE to PE routing is controlled by the service provider.', target:'mplsvpn'}
+  ]
+},
+// -------- Q4 --------
+{ n:4, title:'YANG Push / Telemetry Elements', type:'bucket',
+  instr:'Drag and drop the elements from the left onto the YANG models where they are used on the right.',
+  targets:[
+    {id:'ietfPush', label:'IETF YANG Push Coverage', cap:2},
+    {id:'ocTelemetry', label:'OpenConfig Telemetry Coverage', cap:2}
+  ],
+  items:[
+    {id:'i1', text:'XML', target:'ietfPush'},
+    {id:'i2', text:'NETCONF', target:'ietfPush'},
+    {id:'i3', text:'gNMI', target:'ocTelemetry'},
+    {id:'i4', text:'GRPC', target:'ocTelemetry'}
+  ]
+},
+// -------- Q5 --------
+{ n:5, title:'NETCONF vs RESTCONF', type:'bucket',
+  instr:'Drag and drop the elements from the left onto the protocols where they are used on the right.',
+  targets:[
+    {id:'netconf', label:'NETCONF', cap:3},
+    {id:'restconf', label:'RESTCONF', cap:3}
+  ],
+  items:[
+    {id:'i1', text:'SSH/TLS', target:'netconf'},
+    {id:'i2', text:'ncclient', target:'netconf'},
+    {id:'i3', text:'RPC messages', target:'netconf'},
+    {id:'i4', text:'HTTP/HTTPS', target:'restconf'},
+    {id:'i5', text:'requests library', target:'restconf'},
+    {id:'i6', text:'HTTP methods', target:'restconf'}
+  ]
+},
+// -------- Q6 --------
+{ n:6, title:'Cisco SD-WAN Components', type:'match',
+  instr:'Drag and drop the descriptions from the left onto the Cisco SD-WAN component they describe on the right.',
+  targets:[
+    {id:'wanEdge', label:'Cisco WAN Edge router', cap:1},
+    {id:'vsmart', label:'Cisco vSmart Controller', cap:1},
+    {id:'vmanage', label:'Cisco vManage', cap:1},
+    {id:'vbond', label:'Cisco vBond Orchestrator', cap:1}
+  ],
+  items:[
+    {id:'i1', text:'is responsible for traffic forwarding, security, encryption, QoS, and routing protocols', target:'wanEdge'},
+    {id:'i2', text:'distributes routes and policy information via OMP', target:'vsmart'},
+    {id:'i3', text:'enables centralized provisioning and simplifies network changes', target:'vmanage'},
+    {id:'i4', text:'enables the communication of devices that sit behind NAT', target:'vbond'}
+  ]
+},
+// -------- Q7 --------
+{ n:7, title:'Model-Driven Telemetry Modes', type:'bucket',
+  instr:'Drag and drop the model-driven telemetry considerations from the left onto the modes they apply to on the right.',
+  targets:[
+    {id:'dialIn', label:'Dial-In Mode', cap:2},
+    {id:'dialOut', label:'Dial-Out Mode', cap:2}
+  ],
+  items:[
+    {id:'i1', text:'uses a transient connection', target:'dialIn'},
+    {id:'i2', text:'single channel (config and streaming)', target:'dialIn'},
+    {id:'i3', text:'no need to open ports for inbound management traffic', target:'dialOut'},
+    {id:'i4', text:'anycast and load-balancing', target:'dialOut'}
+  ]
+},
+// -------- Q8 --------
+{ n:8, title:'SD-Access Architecture', type:'match',
+  instr:'Drag and drop the components in a Cisco SD-Access architecture from the left onto their descriptions on the right.',
+  targets:[
+    {id:'underlay', label:'underlay network', cap:1},
+    {id:'overlay', label:'overlay network', cap:1},
+    {id:'fabCtrl', label:'fabric control plane', cap:1},
+    {id:'fabData', label:'fabric data plane', cap:1}
+  ],
+  items:[
+    {id:'i1', text:'defined by the physical switches and routers', target:'underlay'},
+    {id:'i2', text:'uses VXLAN to overlay a Layer 2 network on top of a Layer 3 network', target:'overlay'},
+    {id:'i3', text:'uses LISP to exchange EID-to-RLOC mapping', target:'fabCtrl'},
+    {id:'i4', text:'contains data plane traffic and control plane signaling', target:'fabData'}
+  ]
+},
+// -------- Q9 --------
+{ n:9, title:'WAN Edge Onboarding Order', type:'order',
+  instr:'Drag and drop the steps WAN Edge performs when on-boarded into the Cisco SD-WAN overlay from the left into the order they are completed on the right.',
+  targets:[
+    {id:'step1', label:'Step 1', cap:1},
+    {id:'step2', label:'Step 2', cap:1},
+    {id:'step3', label:'Step 3', cap:1},
+    {id:'step4', label:'Step 4', cap:1}
+  ],
+  items:[
+    {id:'i1', text:'WAN Edge authenticates to vBond.', target:'step1'},
+    {id:'i2', text:'WAN Edge establishes a secure connection to vManage and vSmart.', target:'step2'},
+    {id:'i3', text:'WAN Edge establishes an OMP session to vSmart.', target:'step3'},
+    {id:'i4', text:'WAN Edge establishes IPsec connections to other TLOC locations.', target:'step4'}
+  ]
+},
+// -------- Q10 --------
+{ n:10, title:'WAN Connectivity Use Cases', type:'match',
+  instr:'Drag and drop the types of WAN connectivity from the left onto the connectivity use cases on the right.',
+  targets:[
+    {id:'shortDc', label:'recommended for short-distance data center interconnect', cap:1},
+    {id:'longDc', label:'recommended for long-distance data center interconnect', cap:1},
+    {id:'connectDc', label:'recommended for connectivity to the data center', cap:1}
+  ],
+  items:[
+    {id:'i1', text:'Metro Ethernet', target:'shortDc'},
+    {id:'i2', text:'DWDM', target:'longDc'},
+    {id:'i3', text:'SD-WAN customer edge', target:'connectDc'}
+  ]
+},
+// -------- Q11 --------
+{ n:11, title:'Metro Ethernet vs SD-WAN', type:'bucket',
+  instr:'Drag and drop the descriptions from the left onto the categories they apply to on the right.',
+  targets:[
+    {id:'metroE', label:'Metro Ethernet', cap:2},
+    {id:'sdwan2', label:'SD-WAN', cap:2}
+  ],
+  items:[
+    {id:'i1', text:'bandwidth increased dynamically without installing new equipment', target:'metroE'},
+    {id:'i2', text:'same technology that is used in the LAN', target:'metroE'},
+    {id:'i3', text:'large-scale IoT and mobile global enterprises deployments', target:'sdwan2'},
+    {id:'i4', text:'greater speed, reliability, and efficiency while connecting to cloud platforms', target:'sdwan2'}
+  ]
+},
+// -------- Q12 --------
+{ n:12, title:'VLSM Subnetting', type:'match',
+  instr:'An engineer must design a subnetting scheme from 10.1.1.0/24 that meets each department\u2019s host requirements. Drag and drop the subnets onto the correct department. Not all subnets are used.',
+  targets:[
+    {id:'hr', label:'5 hosts for Human Resources', cap:1},
+    {id:'facilities', label:'18 hosts for Facilities', cap:1},
+    {id:'engineering', label:'32 hosts for Engineering', cap:1},
+    {id:'finance', label:'12 hosts for Finance', cap:1}
+  ],
+  items:[
+    {id:'i1', text:'10.1.1.16/27', target:null},
+    {id:'i2', text:'10.1.1.96/26', target:null},
+    {id:'i3', text:'10.1.1.96/28', target:'finance'},
+    {id:'i4', text:'10.1.1.112/29', target:'hr'},
+    {id:'i5', text:'10.1.1.8/28', target:null},
+    {id:'i6', text:'10.1.1.0/26', target:'engineering'},
+    {id:'i7', text:'10.1.1.64/27', target:'facilities'}
+  ]
+},
+// -------- Q13 --------
+{ n:13, title:'SD-WAN Planes', type:'match',
+  instr:'Drag and drop the Cisco SD-WAN components from the left onto their definitions on the right.',
+  targets:[
+    {id:'mgmt', label:'responsible for central configuration and monitoring', cap:1},
+    {id:'orch', label:'onboards SD-WAN routers into the overlay', cap:1},
+    {id:'dataP', label:'forwards packets based on decisions from the control plane', cap:1},
+    {id:'ctrlP', label:'builds and maintains the network topology', cap:1}
+  ],
+  items:[
+    {id:'i1', text:'management plane', target:'mgmt'},
+    {id:'i2', text:'orchestration plane', target:'orch'},
+    {id:'i3', text:'data plane', target:'dataP'},
+    {id:'i4', text:'control plane', target:'ctrlP'}
+  ]
+},
+// -------- Q14 --------
+{ n:14, title:'Catalyst SD-WAN Components', type:'match',
+  instr:'Drag and drop the Cisco Catalyst SD-WAN components from the left to their definitions on the right.',
+  targets:[
+    {id:'gui', label:'GUI interface used to manage Cisco Catalyst SD-WAN devices', cap:1},
+    {id:'omp', label:'uses OMP to distribute routes and policy information to WAN Edge routers', cap:1},
+    {id:'fwd', label:'forwards, security, encryption, QoS, and routing protocols', cap:1}
+  ],
+  items:[
+    {id:'i1', text:'vManage', target:'gui'},
+    {id:'i2', text:'vSmart controller', target:'omp'},
+    {id:'i3', text:'WAN Edge', target:'fwd'}
+  ]
+},
+// -------- Q15 --------
+{ n:15, title:'Catalyst SD-WAN Component Functions', type:'match',
+  instr:'Drag and drop the Cisco Catalyst SD-WAN components from the left onto the functions they perform on the right.',
+  targets:[
+    {id:'secure', label:'provides secure data plane connectivity between sites', cap:1},
+    {id:'monitor', label:'interface to monitor, configure, and maintain Cisco Catalyst SD-WAN devices', cap:1},
+    {id:'reflect', label:'acts as a route reflector to distribute route and policy information', cap:1},
+    {id:'onboard', label:'facilitates Cisco Catalyst SD-WAN fabric onboarding', cap:1}
+  ],
+  items:[
+    {id:'i1', text:'vEdge', target:'secure'},
+    {id:'i2', text:'vManage', target:'monitor'},
+    {id:'i3', text:'vSmart', target:'reflect'},
+    {id:'i4', text:'vBond', target:'onboard'}
+  ]
+},
+// -------- Q16 --------
+{ n:16, title:'YANG Model Use Cases', type:'match',
+  instr:'Drag and drop the YANG data models from the left onto the corresponding use cases on the right.',
+  targets:[
+    {id:'leading', label:'recommended for leading edge feature deployments', cap:1},
+    {id:'simple', label:'recommended for less complex and initial automation deployments', cap:1},
+    {id:'complex', label:'recommended for complex, reliable deployments', cap:1}
+  ],
+  items:[
+    {id:'i1', text:'Cisco native', target:'leading'},
+    {id:'i2', text:'IETF', target:'simple'},
+    {id:'i3', text:'OpenConfig', target:'complex'}
+  ]
+}
+];
+
+/* ---------------- STATE ---------------- */
+let curIdx = 0;
+// placements[qIdx] = { itemId: {targetId, slotIdx} }
+let placements = QUESTIONS.map(()=>({}));
+// status[qIdx] = 'unanswered' | 'correct' | 'incorrect' | 'revealed'
+let status = QUESTIONS.map(()=> 'unanswered');
+let showingSummary = false;
+
+const mainEl = document.getElementById('main');
+const qCounter = document.getElementById('qCounter');
+const scorePill = document.getElementById('scorePill');
+const progressBar = document.getElementById('progressBar');
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function updateHeader(){
+  if(showingSummary){
+    qCounter.textContent = '결과 요약';
+  } else {
+    qCounter.textContent = `문제 ${curIdx+1} / ${QUESTIONS.length}`;
+  }
+  const correctCount = status.filter(s=>s==='correct').length;
+  const answered = status.filter(s=>s!=='unanswered').length;
+  scorePill.textContent = `${correctCount} / ${QUESTIONS.length}`;
+  progressBar.style.width = (answered/QUESTIONS.length*100)+'%';
+}
+
+function poolItemsFor(qIdx){
+  const q = QUESTIONS[qIdx];
+  const placed = placements[qIdx];
+  return q.items.filter(it => !placed[it.id]);
+}
+
+function render(){
+  if(showingSummary){ renderSummary(); updateHeader(); return; }
+  const q = QUESTIONS[curIdx];
+  const placed = placements[curIdx];
+  const st = status[curIdx];
+
+  let html = '';
+  html += `<div class="qmeta">문제 ${q.n} · ${escapeHtml(q.title)}</div>`;
+  html += `<div class="instr">${escapeHtml(q.instr)}</div>`;
+  html += `<div class="pool" id="pool"></div>`;
+  html += `<div class="zones">`;
+  q.targets.forEach(t=>{
+    html += `<div class="zone"><div class="zone-head">${escapeHtml(t.label)}</div><div class="zone-body">`;
+    for(let s=0; s<t.cap; s++){
+      html += `<div class="slot" data-target="${t.id}" data-slot="${s}"><span class="slot-empty-label">${q.type==='order' ? '' : '&nbsp;'}</span></div>`;
+    }
+    html += `</div></div>`;
+  });
+  html += `</div>`;
+  html += `<div id="feedbackWrap"></div>`;
+
+  mainEl.innerHTML = html;
+
+  // place chips already assigned
+  const poolEl = document.getElementById('pool');
+  Object.entries(placed).forEach(([itemId, loc])=>{
+    const item = q.items.find(i=>i.id===itemId);
+    const slotEl = document.querySelector(`.slot[data-target="${loc.targetId}"][data-slot="${loc.slotIdx}"]`);
+    if(slotEl && item){
+      slotEl.innerHTML='';
+      slotEl.appendChild(makeChip(item));
+    }
+  });
+
+  // pool chips (unplaced)
+  const remaining = poolItemsFor(curIdx);
+  remaining.forEach(it=>{
+    poolEl.appendChild(makeChip(it));
+  });
+  if(remaining.length===0) poolEl.classList.add('empty');
+
+  // reapply grading visuals if already graded/revealed
+  if(st==='correct' || st==='incorrect'){
+    applyGrading(false);
+  } else if(st==='revealed'){
+    applyGrading(true);
+  }
+
+  attachInteractions();
+  updateButtons();
+  updateHeader();
+}
+
+function makeChip(item){
+  const el = document.createElement('div');
+  el.className='chip';
+  el.dataset.itemId = item.id;
+  el.textContent = item.text;
+  return el;
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+/* ---------------- INTERACTION (tap-select + pointer-drag) ---------------- */
+let selectedChip = null; // {itemId, fromTarget, fromSlot} currently tap-selected
+let dragState = null;
+
+function attachInteractions(){
+  const chips = mainEl.querySelectorAll('.chip');
+  chips.forEach(chip=>{
+    chip.addEventListener('pointerdown', onChipPointerDown);
+  });
+  const slots = mainEl.querySelectorAll('.slot');
+  slots.forEach(slot=>{
+    slot.addEventListener('pointerup', ()=> onSlotTap(slot));
+  });
+  const pool = document.getElementById('pool');
+  if(pool) pool.addEventListener('pointerup', (e)=>{
+    if(e.target.id==='pool') onPoolTap();
+  });
+}
+
+function clearSelection(){
+  mainEl.querySelectorAll('.chip.selected').forEach(c=>c.classList.remove('selected'));
+  selectedChip = null;
+}
+
+function onChipPointerDown(e){
+  if(status[curIdx]==='revealed') return;
+  const chipEl = e.currentTarget;
+  const itemId = chipEl.dataset.itemId;
+  const startX = e.clientX, startY = e.clientY;
+  let moved = false;
+  let ghost = null;
+
+  function onMove(ev){
+    const dx = ev.clientX-startX, dy = ev.clientY-startY;
+    if(!moved && Math.hypot(dx,dy) > 8){
+      moved = true;
+      chipEl.classList.add('dragging');
+      ghost = document.createElement('div');
+      ghost.className='ghost-chip';
+      ghost.textContent = chipEl.textContent;
+      document.body.appendChild(ghost);
+    }
+    if(moved && ghost){
+      ghost.style.left = ev.clientX+'px';
+      ghost.style.top = ev.clientY+'px';
+      mainEl.querySelectorAll('.slot').forEach(s=>s.classList.remove('hover'));
+      const under = document.elementFromPoint(ev.clientX, ev.clientY);
+      const slot = under && under.closest ? under.closest('.slot') : null;
+      if(slot) slot.classList.add('hover');
+    }
+  }
+  function onUp(ev){
+    document.removeEventListener('pointermove', onMove);
+    document.removeEventListener('pointerup', onUp);
+    chipEl.classList.remove('dragging');
+    if(ghost) ghost.remove();
+    mainEl.querySelectorAll('.slot').forEach(s=>s.classList.remove('hover'));
+
+    if(moved){
+      const under = document.elementFromPoint(ev.clientX, ev.clientY);
+      const slot = under && under.closest ? under.closest('.slot') : null;
+      const pool = under && under.closest ? under.closest('#pool') : null;
+      if(slot){
+        placeItemInSlot(itemId, slot.dataset.target, parseInt(slot.dataset.slot));
+      } else if(pool){
+        unplaceItem(itemId);
+      }
+      render();
+    } else {
+      // tap = select/deselect
+      if(selectedChip && selectedChip.itemId===itemId){
+        clearSelection();
+      } else {
+        clearSelection();
+        selectedChip = {itemId};
+        chipEl.classList.add('selected');
+      }
+    }
+  }
+  document.addEventListener('pointermove', onMove);
+  document.addEventListener('pointerup', onUp);
+}
+
+function onSlotTap(slotEl){
+  if(status[curIdx]==='revealed') return;
+  if(!selectedChip) {
+    // if slot has a chip, tapping it (without drag) is handled by chip's own pointerdown/up (tap->select)
+    return;
+  }
+  const targetId = slotEl.dataset.target;
+  const slotIdx = parseInt(slotEl.dataset.slot);
+  placeItemInSlot(selectedChip.itemId, targetId, slotIdx);
+  clearSelection();
+  render();
+}
+
+function onPoolTap(){
+  if(selectedChip){
+    unplaceItem(selectedChip.itemId);
+    clearSelection();
+    render();
+  }
+}
+
+function placeItemInSlot(itemId, targetId, slotIdx){
+  const placed = placements[curIdx];
+  // if slot occupied by another item, swap it back to pool
+  const occupied = Object.entries(placed).find(([id,loc])=> loc.targetId===targetId && loc.slotIdx===slotIdx);
+  if(occupied) delete placed[occupied[0]];
+  placed[itemId] = {targetId, slotIdx};
+  if(status[curIdx]!=='unanswered' && status[curIdx]!=='revealed') status[curIdx]='unanswered';
+}
+
+function unplaceItem(itemId){
+  const placed = placements[curIdx];
+  delete placed[itemId];
+  if(status[curIdx]!=='unanswered' && status[curIdx]!=='revealed') status[curIdx]='unanswered';
+}
+
+/* ---------------- GRADING ---------------- */
+function grade(){
+  const q = QUESTIONS[curIdx];
+  const placed = placements[curIdx];
+  let allCorrect = true;
+  let anyPlaced = Object.keys(placed).length>0;
+  q.items.forEach(it=>{
+    const loc = placed[it.id];
+    if(it.target===null){
+      if(loc) allCorrect=false; // distractor should stay unplaced
+    } else {
+      if(!loc || loc.targetId!==it.target) allCorrect=false;
+    }
+  });
+  if(!anyPlaced) allCorrect=false;
+  status[curIdx] = allCorrect ? 'correct' : 'incorrect';
+  applyGrading(false);
+  updateFeedback(allCorrect ? 'ok' : 'bad', allCorrect ? '✅ 정답입니다!' : '❌ 오답이 있습니다. 빨간 슬롯을 확인하세요.');
+  updateHeader();
+  updateButtons();
+}
+
+function applyGrading(isReveal){
+  const q = QUESTIONS[curIdx];
+  const placed = placements[curIdx];
+  document.querySelectorAll('.slot').forEach(slotEl=>{
+    slotEl.classList.remove('correct','incorrect');
+    const targetId = slotEl.dataset.target;
+    const slotIdx = parseInt(slotEl.dataset.slot);
+    const entry = Object.entries(placed).find(([id,loc])=> loc.targetId===targetId && loc.slotIdx===slotIdx);
+    if(entry){
+      const item = q.items.find(i=>i.id===entry[0]);
+      if(item.target===targetId) slotEl.classList.add('correct');
+      else slotEl.classList.add('incorrect');
+    }
+  });
+}
+
+function reveal(){
+  const q = QUESTIONS[curIdx];
+  const newPlaced = {};
+  q.targets.forEach(t=>{
+    let slotCounter = 0;
+    q.items.filter(it=>it.target===t.id).forEach(it=>{
+      newPlaced[it.id] = {targetId:t.id, slotIdx:slotCounter};
+      slotCounter++;
+    });
+  });
+  placements[curIdx] = newPlaced;
+  status[curIdx] = 'revealed';
+  render();
+  updateFeedback('info', '💡 정답을 표시했습니다.');
+}
+
+function resetQuestion(){
+  placements[curIdx] = {};
+  status[curIdx] = 'unanswered';
+  clearSelection();
+  render();
+}
+
+function updateFeedback(kind, text){
+  const wrap = document.getElementById('feedbackWrap');
+  if(!wrap) return;
+  wrap.innerHTML = `<div class="feedback ${kind}">${text}</div>`;
+}
+
+function updateButtons(){
+  document.getElementById('btnPrev').disabled = curIdx===0 && !showingSummary ? true : false;
+  document.getElementById('btnPrev').disabled = curIdx===0;
+}
+
+/* ---------------- NAV ---------------- */
+document.getElementById('btnCheck').addEventListener('click', ()=>{
+  if(showingSummary) return;
+  grade();
+});
+document.getElementById('btnReveal').addEventListener('click', ()=>{
+  if(showingSummary) return;
+  reveal();
+});
+document.getElementById('btnReset').addEventListener('click', ()=>{
+  if(showingSummary) return;
+  resetQuestion();
+});
+document.getElementById('btnPrev').addEventListener('click', ()=>{
+  if(showingSummary){ showingSummary=false; curIdx=QUESTIONS.length-1; render(); return; }
+  if(curIdx>0){ curIdx--; render(); }
+});
+document.getElementById('btnNext').addEventListener('click', ()=>{
+  if(showingSummary) return;
+  if(curIdx<QUESTIONS.length-1){ curIdx++; render(); }
+  else { showingSummary=true; render(); }
+});
+
+/* ---------------- SUMMARY ---------------- */
+function renderSummary(){
+  const correctCount = status.filter(s=>s==='correct').length;
+  const total = QUESTIONS.length;
+  let html = `<div class="summary">`;
+  html += `<h2>학습 결과</h2>`;
+  html += `<div class="big">${correctCount} / ${total}</div>`;
+  html += `<div style="color:var(--gray); margin-top:6px; font-size:13px;">정답률 ${Math.round(correctCount/total*100)}%</div>`;
+  html += `<div class="qchips">`;
+  QUESTIONS.forEach((q,idx)=>{
+    const st = status[idx];
+    const cls = st==='correct' ? 'correct' : (st==='unanswered' ? 'unanswered' : 'incorrect');
+    html += `<div class="qchip ${cls}" data-idx="${idx}">${q.n}</div>`;
+  });
+  html += `</div>`;
+  html += `<div style="margin-top:16px; display:flex; gap:8px; justify-content:center;">
+    <button class="btn-nav" id="btnRetryWrong" style="flex:none; padding:10px 16px;">틀린 문제만 다시</button>
+    <button class="btn-nav" id="btnRestartAll" style="flex:none; padding:10px 16px;">전체 초기화</button>
+  </div>`;
+  html += `</div>`;
+  mainEl.innerHTML = html;
+
+  mainEl.querySelectorAll('.qchip').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      curIdx = parseInt(el.dataset.idx);
+      showingSummary=false;
+      render();
+    });
+  });
+  const retryBtn = document.getElementById('btnRetryWrong');
+  if(retryBtn) retryBtn.addEventListener('click', ()=>{
+    const wrongIdx = status.findIndex(s=> s!=='correct');
+    if(wrongIdx===-1){ alert('모두 정답입니다! 🎉'); return; }
+    curIdx = wrongIdx;
+    showingSummary=false;
+    render();
+  });
+  const restartBtn = document.getElementById('btnRestartAll');
+  if(restartBtn) restartBtn.addEventListener('click', ()=>{
+    if(!confirm('모든 진행 상황을 초기화할까요?')) return;
+    placements = QUESTIONS.map(()=>({}));
+    status = QUESTIONS.map(()=> 'unanswered');
+    curIdx = 0;
+    showingSummary = false;
+    render();
+  });
+}
+
+render();
+</script>
+</body>
+</html>
